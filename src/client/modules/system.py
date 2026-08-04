@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import os
 import platform
+import string
 import subprocess
 import time
 from pathlib import Path
@@ -14,7 +15,6 @@ import psutil
 class SystemModules:
     def __init__(self) -> None:
         self.consent = os.getenv("REMOTE_ADMIN_CONSENT", "false").lower() == "true"
-        self.file_root = Path(os.getenv("REMOTE_ADMIN_FILE_ROOT", str(Path.home() / "Documents"))).resolve()
 
     def processes(self) -> list[dict[str, Any]]:
         items = []
@@ -30,10 +30,16 @@ class SystemModules:
             try:
                 info = proc.as_dict(attrs=["pid", "name", "memory_info", "status"])
                 rss = info["memory_info"].rss
-                result.append({"pid": info["pid"], "name": info["name"] or "unknown", "cpu_percent": round(proc.cpu_percent(None), 1), "ram_mb": round(rss / 1048576, 2), "status": info["status"]})
+                result.append({
+                    "pid": info["pid"],
+                    "name": info["name"] or "unknown",
+                    "cpu_percent": round(proc.cpu_percent(None), 1),
+                    "ram_mb": round(rss / 1048576, 2),
+                    "status": info["status"],
+                })
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
-        return sorted(result, key=lambda value: (-value["cpu_percent"], -value["ram_mb"]))
+        return sorted(result, key=lambda v: (-v["cpu_percent"], -v["ram_mb"]))
 
     def kill(self, pid: int) -> dict[str, Any]:
         if pid in {0, 4, os.getpid()}:
@@ -43,60 +49,148 @@ class SystemModules:
             name = proc.name()
             if name.casefold() in {"system", "system idle process", "registry", "smss.exe", "csrss.exe", "wininit.exe"}:
                 return {"ok": False, "error": "protected system process"}
-            proc.kill(); proc.wait(3)
+            proc.kill()
+            proc.wait(3)
             return {"ok": True, "pid": pid, "name": name}
-        except psutil.NoSuchProcess: return {"ok": False, "error": "process not found"}
-        except psutil.AccessDenied: return {"ok": False, "error": "access denied"}
-        except psutil.TimeoutExpired: return {"ok": False, "error": "termination timeout"}
+        except psutil.NoSuchProcess:
+            return {"ok": False, "error": "process not found"}
+        except psutil.AccessDenied:
+            return {"ok": False, "error": "access denied"}
+        except psutil.TimeoutExpired:
+            return {"ok": False, "error": "termination timeout"}
 
     def applications(self) -> list[dict[str, Any]]:
         return self.processes()
 
     def open_application(self, app: str) -> dict[str, Any]:
         commands = {"notepad": ["notepad.exe"], "calculator": ["calc.exe"]}
-        if app not in commands: return {"ok": False, "error": "application is not allow-listed"}
+        if app not in commands:
+            return {"ok": False, "error": "application is not allow-listed"}
         subprocess.Popen(commands[app])
         return {"ok": True, "app": app}
 
-    def list_files(self, relative_path: str) -> dict[str, Any]:
-        root = self.file_root
-        target = (root / relative_path).resolve()
-        if root != target and root not in target.parents:
-            return {"ok": False, "error": "path outside allowed root"}
+    def open_application_by_path(self, path: str) -> dict[str, Any]:
+        """Open any application by its full filesystem path."""
         try:
-            return {"ok": True, "root": str(root), "path": str(target.relative_to(root)), "items": [{"name": item.name, "is_dir": item.is_dir(), "size": item.stat().st_size if item.is_file() else None} for item in sorted(target.iterdir(), key=lambda item: (not item.is_dir(), item.name.lower()))[:200]]}
-        except OSError as error: return {"ok": False, "error": str(error)}
+            target = Path(path).resolve()
+            if not target.is_file():
+                return {"ok": False, "error": f"File không tồn tại: {path}"}
+            subprocess.Popen([str(target)], shell=False)
+            return {"ok": True, "path": str(target)}
+        except PermissionError:
+            return {"ok": False, "error": "Không có quyền truy cập"}
+        except Exception as error:
+            return {"ok": False, "error": str(error)}
+
+    def list_files(self, path: str) -> dict[str, Any]:
+        """
+        Browse the full filesystem.
+        - path="" → returns available drives (Windows) or root (Unix)
+        - path=<absolute> → lists contents of that directory
+        """
+        if not path:
+            # Root: show drives on Windows, / on Linux/macOS
+            if platform.system() == "Windows":
+                drives = []
+                for letter in string.ascii_uppercase:
+                    drive = f"{letter}:\\"
+                    if os.path.exists(drive):
+                        drives.append({
+                            "name": drive,
+                            "is_dir": True,
+                            "size": None,
+                            "full_path": drive,
+                        })
+                return {
+                    "ok": True,
+                    "current": "",
+                    "parent": None,
+                    "items": drives,
+                }
+            else:
+                target = Path("/")
+        else:
+            target = Path(path).resolve()
+
+        parent_path = str(target.parent) if target != target.parent else None
+
+        try:
+            items = []
+            entries = sorted(
+                target.iterdir(),
+                key=lambda x: (not x.is_dir(), x.name.lower()),
+            )[:500]
+            for entry in entries:
+                try:
+                    size = entry.stat().st_size if entry.is_file() else None
+                except (PermissionError, OSError):
+                    size = None
+                items.append({
+                    "name": entry.name,
+                    "is_dir": entry.is_dir(),
+                    "size": size,
+                    "full_path": str(entry),
+                })
+            return {
+                "ok": True,
+                "current": str(target),
+                "parent": parent_path,
+                "items": items,
+            }
+        except (PermissionError, OSError) as error:
+            return {"ok": False, "error": str(error)}
 
     def telemetry(self) -> dict[str, Any]:
         temperatures = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
         values = [entry.current for group in temperatures.values() for entry in group if entry.current is not None]
-        return {"ok": True, "uptime_seconds": int(time.time() - psutil.boot_time()), "cpu_percent": psutil.cpu_percent(0.1), "ram_percent": psutil.virtual_memory().percent, "temperature_c": round(max(values), 1) if values else None, "platform": platform.platform()}
+        return {
+            "ok": True,
+            "uptime_seconds": int(time.time() - psutil.boot_time()),
+            "cpu_percent": psutil.cpu_percent(0.1),
+            "ram_percent": psutil.virtual_memory().percent,
+            "temperature_c": round(max(values), 1) if values else None,
+            "platform": platform.platform(),
+        }
 
     def power_action(self, operation: str) -> dict[str, Any]:
         if os.getenv("ALLOW_POWER_ACTIONS", "false").lower() != "true":
             return {"ok": False, "error": "power actions are disabled locally"}
-        commands = {"lock": ["rundll32.exe", "user32.dll,LockWorkStation"], "sleep": ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"], "restart": ["shutdown", "/r", "/t", "15"], "shutdown": ["shutdown", "/s", "/t", "15"]}
-        if operation not in commands: return {"ok": False, "error": "invalid power operation"}
+        commands = {
+            "lock": ["rundll32.exe", "user32.dll,LockWorkStation"],
+            "sleep": ["rundll32.exe", "powrprof.dll,SetSuspendState", "0,1,0"],
+            "restart": ["shutdown", "/r", "/t", "15"],
+            "shutdown": ["shutdown", "/s", "/t", "15"],
+        }
+        if operation not in commands:
+            return {"ok": False, "error": "invalid power operation"}
         subprocess.Popen(commands[operation])
         return {"ok": True, "operation": operation}
 
     def snapshot(self, webcam: bool) -> dict[str, Any]:
-        if not self.consent: return {"ok": False, "error": "local consent is disabled on this Agent"}
+        if not self.consent:
+            return {"ok": False, "error": "local consent is disabled on this Agent"}
         try:
             if webcam:
                 import cv2
-                camera = cv2.VideoCapture(0); ok, frame = camera.read(); camera.release()
-                if not ok: return {"ok": False, "error": "cannot read webcam"}
+                camera = cv2.VideoCapture(0)
+                ok, frame = camera.read()
+                camera.release()
+                if not ok:
+                    return {"ok": False, "error": "cannot read webcam"}
                 ok, encoded = cv2.imencode(".jpg", frame)
-                if not ok: return {"ok": False, "error": "cannot encode webcam frame"}
+                if not ok:
+                    return {"ok": False, "error": "cannot encode webcam frame"}
                 data = encoded.tobytes()
             else:
+                import io
                 import mss
                 from PIL import Image
-                import io
                 with mss.mss() as capture:
                     shot = capture.grab(capture.monitors[1])
                     image = Image.frombytes("RGB", shot.size, shot.rgb)
-                    stream = io.BytesIO(); image.save(stream, format="JPEG", quality=70); data = stream.getvalue()
+                    stream = io.BytesIO()
+                    image.save(stream, format="JPEG", quality=70)
+                    data = stream.getvalue()
             return {"ok": True, "image_base64": base64.b64encode(data).decode("ascii")}
-        except Exception as error: return {"ok": False, "error": str(error)}
+        except Exception as error:
+            return {"ok": False, "error": str(error)}

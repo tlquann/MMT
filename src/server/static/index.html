@@ -1,64 +1,1280 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Remote Control Dashboard</title>
-  <style>
-    :root { --bg:#071018; --panel:#111d28e8; --line:#385060; --cyan:#00d9ee; --cyan-soft:#10b9cd; --text:#e8f4f7; --muted:#90a7b0; --danger:#e05563; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color-scheme:dark; }
-    * { box-sizing:border-box; } body { min-height:100vh; margin:0; color:var(--text); background:radial-gradient(circle at 70% 8%,#17445055,transparent 33%),linear-gradient(135deg,#060c14,#0b1822 55%,#071018); }
-    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.32; background-image:linear-gradient(120deg,transparent 48%,#62d6e322 49%,transparent 50%),radial-gradient(circle at 15% 20%,#71d9e733 0 2px,transparent 3px),radial-gradient(circle at 82% 16%,#71d9e733 0 2px,transparent 3px); background-size:170px 130px,180px 160px,220px 190px; }
-    .shell { position:relative; width:min(1180px,calc(100% - 32px)); margin:38px auto; } .account-button { position:absolute; top:0; right:0; display:grid; place-items:center; width:46px; height:46px; padding:0; border-radius:50%; border:1px solid #7deaf5aa; background:#142b38; color:#e9feff; box-shadow:0 0 16px #00d9ee44; } .account-button:hover { background:#1d4858; } .account-button svg { width:24px; height:24px; } .brand { letter-spacing:2px; font-size:clamp(28px,6vw,54px); margin:0 0 22px; text-shadow:0 0 16px #4aeafc99; }
-    .panel { background:var(--panel); border:1px solid #b1427366; box-shadow:0 0 0 1px #00d9ee22 inset,0 18px 48px #0008; border-radius:7px; padding:26px; backdrop-filter:blur(8px); }
-    .connect-row { display:grid; grid-template-columns:auto 1fr auto; gap:0; align-items:stretch; margin:16px 0 24px; } .protocol { display:flex; align-items:center; padding:0 17px; background:#d3dde0; color:#2a3a43; border-radius:6px 0 0 6px; font-weight:700; }
-    input,select,button { font:inherit; } input,select { min-width:0; color:var(--text); background:#25313b; border:1px solid #48606d; padding:13px; outline:none; } input:focus,select:focus { border-color:var(--cyan); box-shadow:0 0 0 3px #00d9ee22; } .connect-row input { border-left:0; border-radius:0; font-size:17px; }
-    button { border:1px solid #00d9ee99; background:#052d38; color:var(--cyan); padding:12px 18px; cursor:pointer; border-radius:5px; font-weight:800; letter-spacing:.3px; } button:hover { background:#094a59; } .connect-row button { border-radius:0 6px 6px 0; min-width:145px; box-shadow:0 0 14px #00d9ee66; } button.danger { color:#fff; border-color:#e0556399; background:#6e2833; } button.danger:hover { background:#90313f; }
-    .status-line { display:flex; gap:12px; align-items:center; flex-wrap:wrap; color:#c0d0d5; } .badge { display:inline-block; border-radius:4px; padding:4px 9px; font-size:12px; font-weight:800; } .online { background:#087d63; color:#d8fff3; } .offline { background:#5e4950; color:#eee; } .muted { color:var(--muted); }
-    #loginDialog { width:min(440px,calc(100% - 32px)); padding:0; color:var(--text); background:#101d28; border:1px solid #49c9d8; border-radius:8px; box-shadow:0 24px 70px #000d; } #loginDialog::backdrop { background:#02070ccc; backdrop-filter:blur(3px); } #loginDialog form { display:grid; gap:13px; padding:28px; } #loginDialog label { display:grid; gap:6px; color:var(--muted); font-size:12px; } #loginDialog input { border-radius:5px; } .dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; } .dialog-head h2 { margin:0; } .close-dialog { width:34px; height:34px; padding:0; border-radius:50%; font-size:22px; line-height:1; color:#e9feff; background:#293945; border-color:#65818c; }
-    #workspace { display:none; grid-template-columns:210px 1fr; gap:18px; margin-top:18px; } aside,.content-card { background:var(--panel); border:1px solid var(--line); border-radius:7px; box-shadow:0 15px 35px #0007; } aside { padding:12px; } .nav { width:100%; text-align:left; border-color:transparent; background:transparent; color:#aac2ca; box-shadow:none; margin:2px 0; } .nav.active { color:#00151a; background:var(--cyan); border-color:var(--cyan); } .content-card { padding:22px; min-height:390px; }
-    .workspace-head,.toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; } .toolbar { justify-content:flex-start; margin:14px 0; } .toolbar input { border-radius:5px; } h2 { margin:0; } table { width:100%; border-collapse:collapse; margin-top:12px; } th,td { padding:11px 8px; text-align:left; border-bottom:1px solid #31434e; } th { color:#8fc8d3; } img.live { display:block; max-width:100%; max-height:67vh; margin-top:15px; border:1px solid #49717b; }
-    .metrics { display:flex; flex-wrap:wrap; gap:14px; } .metric { min-width:190px; padding:13px; border:1px solid #385060; border-radius:5px; background:#0d1720; } .bar { height:7px; margin-top:8px; background:#243943; border-radius:5px; overflow:hidden; } .bar i { display:block; height:100%; background:var(--cyan); } pre { white-space:pre-wrap; overflow:auto; }
-    .toast { position:fixed; z-index:5; bottom:24px; right:24px; max-width:min(450px,calc(100% - 40px)); background:#075c69; border:1px solid var(--cyan); padding:12px 16px; border-radius:5px; box-shadow:0 10px 32px #000b; } .toast.error { background:#742a36; border-color:#f47a87; }
-    @media(max-width:760px) { .shell { margin:20px auto; } .panel { padding:17px; } .connect-row { grid-template-columns:auto 1fr; } .connect-row button { grid-column:1 / -1; border-radius:5px; margin-top:8px; } .connect-row input { border:1px solid #48606d; border-left:0; border-radius:0 5px 5px 0; } #workspace { grid-template-columns:1fr; } aside { display:flex; overflow:auto; } .nav { white-space:nowrap; width:auto; } }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Remote Control Dashboard</title>
+    <style>
+        /* ── TOKENS ─────────────────────────────────────────── */
+        :root {
+            --bg: #071018;
+            --panel: #0e1c28ee;
+            --line: #2d4555;
+            --cyan: #00d9ee;
+            --cyan-dim: #0899a8;
+            --text: #e0f0f5;
+            --muted: #7a9aaa;
+            --danger: #e05563;
+            --danger-bg: #6e2833;
+            --ok: #1a7a58;
+            --ok-text: #4cffac;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* ── BASE ────────────────────────────────────────────── */
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text);
+            background: radial-gradient(circle at 70% 6%, #17445044, transparent 32%), linear-gradient(140deg, #060c14, #0c1a26 55%, #071018);
+        }
+
+            body::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                opacity: .25;
+                background-image: radial-gradient(circle at 15% 20%, #71d9e726 0 2px, transparent 3px), radial-gradient(circle at 82% 14%, #71d9e726 0 2px, transparent 3px), radial-gradient(circle at 50% 60%, #71d9e714 0 2px, transparent 3px);
+                background-size: 180px 160px, 220px 190px, 260px 230px;
+            }
+
+        /* ── SHELL ───────────────────────────────────────────── */
+        .shell {
+            position: relative;
+            width: min(1200px, calc(100% - 32px));
+            margin: 32px auto;
+        }
+
+        .brand {
+            font-size: clamp(24px, 5vw, 48px);
+            letter-spacing: 3px;
+            margin: 0 0 20px;
+            text-shadow: 0 0 18px #4aeafc77;
+        }
+
+        .account-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+            border: 1px solid #7deaf5aa;
+            background: #142b38;
+            color: #e9feff;
+            box-shadow: 0 0 14px #00d9ee33;
+            display: grid;
+            place-items: center;
+        }
+
+            .account-btn:hover {
+                background: #1d4858;
+            }
+
+            .account-btn svg {
+                width: 22px;
+                height: 22px;
+            }
+
+        /* ── CONNECT PANEL ───────────────────────────────────── */
+        .panel {
+            background: var(--panel);
+            border: 1px solid #9b3a6055;
+            box-shadow: 0 0 0 1px #00d9ee1a inset, 0 16px 44px #0009;
+            border-radius: 8px;
+            padding: 22px;
+            backdrop-filter: blur(10px);
+        }
+
+        .connect-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 0;
+            align-items: stretch;
+            margin: 12px 0 18px;
+        }
+
+        .protocol {
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            background: #c8d8de;
+            color: #1e2e35;
+            border-radius: 6px 0 0 6px;
+            font-weight: 700;
+        }
+
+        input, select, button {
+            font: inherit;
+        }
+
+        input, select {
+            min-width: 0;
+            color: var(--text);
+            background: #1e2e3a;
+            border: 1px solid #3a5565;
+            padding: 11px;
+            outline: none;
+        }
+
+            input:focus, select:focus {
+                border-color: var(--cyan);
+                box-shadow: 0 0 0 3px #00d9ee1a;
+            }
+
+        .connect-row input {
+            border-left: 0;
+            border-radius: 0;
+            font-size: 16px;
+        }
+
+        button {
+            border: 1px solid #00d9ee88;
+            background: #052d38;
+            color: var(--cyan);
+            padding: 10px 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: 700;
+            letter-spacing: .2px;
+            transition: background .15s;
+        }
+
+            button:hover {
+                background: #094a59;
+            }
+
+        .connect-row button {
+            border-radius: 0 6px 6px 0;
+            min-width: 130px;
+            box-shadow: 0 0 12px #00d9ee44;
+        }
+
+        button.danger {
+            color: #fff;
+            border-color: #e0556388;
+            background: var(--danger-bg);
+        }
+
+            button.danger:hover {
+                background: #8f313f;
+            }
+
+        .status-line {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            color: #b0c8d2;
+        }
+
+        .badge {
+            display: inline-block;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .online {
+            background: #087d63;
+            color: #d0fff0;
+        }
+
+        .offline {
+            background: #4e3d44;
+            color: #ddd;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        /* ── LOGIN DIALOG ────────────────────────────────────── */
+        #loginDialog {
+            width: min(420px, calc(100% - 32px));
+            padding: 0;
+            color: var(--text);
+            background: #0f1e2a;
+            border: 1px solid #3ac9d8;
+            border-radius: 8px;
+            box-shadow: 0 22px 60px #000d;
+        }
+
+            #loginDialog::backdrop {
+                background: #02070ccc;
+                backdrop-filter: blur(4px);
+            }
+
+            #loginDialog form {
+                display: grid;
+                gap: 12px;
+                padding: 26px;
+            }
+
+            #loginDialog label {
+                display: grid;
+                gap: 5px;
+                color: var(--muted);
+                font-size: 12px;
+            }
+
+            #loginDialog input {
+                border-radius: 5px;
+            }
+
+        .dialog-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+            .dialog-head h2 {
+                margin: 0;
+            }
+
+        .close-x {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 20px;
+            line-height: 1;
+            color: #e9feff;
+            background: #263542;
+            border-color: #5a7a88;
+            display: grid;
+            place-items: center;
+        }
+
+        /* ── WORKSPACE ───────────────────────────────────────── */
+        #workspace {
+            display: none;
+            grid-template-columns: 190px 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        aside, .content-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 12px 32px #0007;
+        }
+
+        aside {
+            padding: 10px;
+        }
+
+        .nav {
+            width: 100%;
+            text-align: left;
+            border-color: transparent;
+            background: transparent;
+            color: #8ab4c0;
+            box-shadow: none;
+            margin: 2px 0;
+            padding: 9px 12px;
+            border-radius: 5px;
+            transition: background .12s, color .12s;
+        }
+
+            .nav:hover {
+                background: #1a3040;
+                color: var(--text);
+            }
+
+            .nav.active {
+                color: #001820;
+                background: var(--cyan);
+                border-color: var(--cyan);
+            }
+
+        .content-card {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .workspace-head {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+            .workspace-head h2 {
+                margin: 0;
+            }
+
+        /* ── TABLE ───────────────────────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 9px 8px;
+            text-align: left;
+            border-bottom: 1px solid #28404e;
+        }
+
+        th {
+            color: #7ab8c8;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            transition: background .1s;
+        }
+
+            tbody tr:hover {
+                background: #0e2030;
+            }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+            th.sortable:hover {
+                color: var(--cyan);
+            }
+
+        .sort-arrow {
+            font-size: 9px;
+            margin-left: 2px;
+            color: var(--cyan);
+        }
+
+        /* ── TOOLBAR / SEARCH ────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 12px 0;
+        }
+
+            .toolbar input {
+                border-radius: 5px;
+                flex: 1;
+                min-width: 160px;
+            }
+
+        .agent-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .agent-row select {
+                border-radius: 5px;
+                padding: 8px;
+                min-width: 200px;
+            }
+
+        /* ── LAUNCH PANEL (Applications) ─────────────────────── */
+        .launch-panel {
+            background: #0a1922;
+            border: 1px solid #2a4555;
+            border-radius: 7px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+
+        .launch-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--cyan);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .launch-path-row {
+            display: flex;
+            gap: 7px;
+            margin-bottom: 9px;
+        }
+
+            .launch-path-row input {
+                flex: 1;
+                border-radius: 5px;
+                font-size: 13px;
+            }
+
+        .quick-row {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .quick-row .muted {
+                font-size: 11px;
+            }
+
+        .quick-btn {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        /* ── STATUS BADGE (in table) ──────────────────────────── */
+        .s-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            background: #1e3040;
+        }
+
+        .s-running {
+            background: #064a38;
+            color: #40e890;
+        }
+
+        .s-sleeping {
+            background: #1a2c40;
+            color: #70a0c0;
+        }
+
+        /* ── × BUTTON ────────────────────────────────────────── */
+        .btn-x {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 16px;
+            border-radius: 4px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            border-color: #e0556366;
+            background: #6e2833;
+        }
+
+            .btn-x:hover {
+                background: #8f313f;
+            }
+
+        /* ── FILES ───────────────────────────────────────────── */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            background: #0a1820;
+            border: 1px solid #2a4050;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+            .breadcrumb button {
+                padding: 3px 9px;
+                font-size: 11px;
+                border-radius: 3px;
+            }
+
+        .path-label {
+            color: var(--muted);
+            font-size: 12px;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .sep {
+            color: #3a5060;
+        }
+
+        .btn-folder {
+            background: transparent;
+            border: none;
+            color: var(--cyan);
+            padding: 0;
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+            box-shadow: none;
+            text-decoration: underline;
+        }
+
+            .btn-folder:hover {
+                color: #fff;
+                background: transparent;
+            }
+
+        /* ── METRICS / POWER ─────────────────────────────────── */
+        .metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric {
+            min-width: 150px;
+            padding: 14px 16px;
+            border: 1px solid #2e4555;
+            border-radius: 6px;
+            background: #0c1820;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--cyan);
+            line-height: 1.1;
+        }
+
+        .bar {
+            height: 6px;
+            margin-top: 8px;
+            background: #1e3040;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+            .bar i {
+                display: block;
+                height: 100%;
+                background: var(--cyan);
+                transition: width .5s;
+            }
+
+        .power-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .platform-info {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 6px 0 0;
+        }
+
+        /* ── SCREEN / WEBCAM ─────────────────────────────────── */
+        img.live {
+            display: block;
+            max-width: 100%;
+            max-height: 66vh;
+            margin-top: 12px;
+            border: 1px solid #3a6070;
+            border-radius: 4px;
+        }
+
+        .stream-note {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        /* ── AUDIT ───────────────────────────────────────────── */
+        .audit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .audit-entry {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 7px 11px;
+            border-radius: 5px;
+            background: #0c1a26;
+            border: 1px solid #253545;
+            font-size: 12px;
+            align-items: baseline;
+        }
+
+            .audit-entry.fail {
+                border-color: #5a2030;
+            }
+
+        .audit-time {
+            color: var(--muted);
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+
+        .audit-event {
+            color: var(--cyan);
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .audit-detail {
+            color: #a0bcc8;
+        }
+
+        /* ── MISC ────────────────────────────────────────────── */
+        .err-text {
+            color: var(--danger);
+        }
+
+        .loading {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            overflow: auto;
+            font-size: 12px;
+        }
+
+        /* ── TOAST ───────────────────────────────────────────── */
+        .toast {
+            position: fixed;
+            z-index: 9;
+            bottom: 22px;
+            right: 22px;
+            max-width: min(440px, calc(100% - 36px));
+            background: #075c69;
+            border: 1px solid var(--cyan);
+            padding: 11px 15px;
+            border-radius: 5px;
+            box-shadow: 0 8px 28px #000c;
+            font-size: 13px;
+            animation: fadeIn .18s ease;
+        }
+
+            .toast.error {
+                background: #6e2030;
+                border-color: #f07080;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 760px) {
+            .shell {
+                margin: 14px auto;
+            }
+
+            .panel {
+                padding: 14px;
+            }
+
+            .connect-row {
+                grid-template-columns: auto 1fr;
+            }
+
+                .connect-row button {
+                    grid-column: 1 / -1;
+                    border-radius: 5px;
+                    margin-top: 6px;
+                }
+
+                .connect-row input {
+                    border: 1px solid #3a5565;
+                    border-left: 0;
+                    border-radius: 0 5px 5px 0;
+                }
+
+            #workspace {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                display: flex;
+                overflow-x: auto;
+            }
+
+            .nav {
+                white-space: nowrap;
+                width: auto;
+            }
+
+            .metrics {
+                gap: 8px;
+            }
+
+            .metric {
+                min-width: 130px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <main class="shell">
-    <h1 class="brand">DASHBOARD</h1><button id="loginToggle" class="account-button" type="button" aria-label="Mở đăng nhập" aria-expanded="false" onclick="toggleLogin()"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-9.5 2.67-9.5 6v2h19v-2c0-3.33-4.17-6-9.5-6Z"/></svg></button>
-    <section class="panel" aria-label="Kết nối Dashboard">
-      <label class="muted" for="serverAddress">Nhập địa chỉ Dashboard Server:</label>
-      <div class="connect-row"><span class="protocol">http://</span><input id="serverAddress" autocomplete="off" placeholder="127.0.0.1:5000"><button type="button" onclick="connectDashboard()">⚡ Connect</button></div>
-      <div class="status-line"><strong>Trạng thái:</strong> <span id="connectionState" class="badge offline">Chưa kết nối</span><span id="lastUpdate" class="muted">Chưa có cập nhật</span></div>
-      <dialog id="loginDialog" aria-labelledby="loginTitle"><form id="login" onsubmit="login(event)"><div class="dialog-head"><h2 id="loginTitle">Đăng nhập</h2><button class="close-dialog" type="button" aria-label="Đóng đăng nhập" onclick="closeLogin()">×</button></div><p class="muted">Đăng nhập để quản lý các Client đã kết nối.</p><label>Username<input id="username" value="admin" required></label><label>Password<input id="password" type="password" required></label><button type="submit">Đăng nhập</button></form></dialog>
-    </section>
-    <section id="workspace">
-      <aside>
-        <button class="nav active" data-view="applications">Applications</button><button class="nav" data-view="processes">Processes</button><button class="nav" data-view="screen">Screen</button><button class="nav" data-view="files">Files</button><button class="nav" data-view="webcam">Webcam</button><button class="nav" data-view="power">Power</button><button class="nav" data-view="audit">Audit logs</button>
-      </aside>
-      <article class="content-card"><div class="workspace-head"><div><h2 id="title">Applications</h2><p id="agentState" class="muted">Chưa chọn Client</p></div><div class="toolbar"><select id="agent"></select><button onclick="refreshClients()">Làm mới</button></div></div><div id="content"></div></article>
-    </section>
-  </main><div id="toast"></div>
-  <script>
-    let token='', view='applications', streamTimer=null, currentPath='', apiBase='', clients=[];
-    const $ = s => document.querySelector(s); const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const api = path => apiBase + path; const headers = () => ({'Content-Type':'application/json', Authorization:'Bearer '+token});
-    function notify(text,error=false) { $('#toast').innerHTML=`<div class="toast ${error?'error':''}">${esc(text)}</div>`; setTimeout(()=>$('#toast').innerHTML='',3600); }
-    function updateStatus(online, text) { const badge=$('#connectionState'); badge.className='badge '+(online?'online':'offline'); badge.textContent=online?'Connected':'Disconnected'; $('#lastUpdate').textContent=text||`Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`; }
-    function toggleLogin(){const dialog=$('#loginDialog');if(dialog.open){dialog.close();return;}dialog.showModal();$('#username').focus();}
-    function closeLogin(){$('#loginDialog').close();}    function normalizeAddress(value) { let address=value.trim().replace(/^https?:\/\//,''); if (!address) address=location.host; return location.protocol+'//'+address.replace(/::$/,':'); }
-    async function connectDashboard() { apiBase=normalizeAddress($('#serverAddress').value); $('#serverAddress').value=apiBase.replace(/^https?:\/\//,''); updateStatus(false,'Đang kiểm tra kết nối...'); try { const response=await fetch(api('/api/agents')); if (response.status===401 || response.ok) { updateStatus(true); notify('Đã kết nối Dashboard'); } else throw new Error('Máy chủ không phản hồi hợp lệ'); } catch (error) { updateStatus(false,'Không thể kết nối. Kiểm tra IP, cổng hoặc chính sách CORS.'); notify(error.message||'Không thể kết nối',true); } }
-    async function login(event) { event.preventDefault(); if (!apiBase) apiBase=location.origin; try { const response=await fetch(api('/api/login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value,password:password.value})}); const data=await response.json(); if(!response.ok) throw new Error(data.error||'Đăng nhập thất bại'); token=data.token; updateStatus(true); $('#loginDialog').close(); $('#workspace').style.display='grid'; refreshClients(); } catch(error) { notify(error.message,true); } }
-    async function refreshClients() { const response=await fetch(api('/api/agents'),{headers:{Authorization:'Bearer '+token}}); const data=await response.json(); if(!response.ok) return notify(data.error||'Không tải được Client',true); clients=data.agents||[]; agent.innerHTML=clients.map(item=>`<option value="${esc(item.agent_id)}">${esc(item.hostname)} · ${esc(item.agent_id)}</option>`).join(''); $('#agentState').textContent=clients.length?`${clients.length} Client online`:'Không có Client online'; render(); }
-    async function command(action,payload={}) { if(!agent.value) { notify('Hãy chọn Client trước',true); return {ok:false}; } const response=await fetch(api(`/api/agents/${encodeURIComponent(agent.value)}/commands`),{method:'POST',headers:headers(),body:JSON.stringify({action,payload})}); const data=await response.json(); if(!response.ok) notify(data.error||'Lệnh thất bại',true); return data; }
-    function rows(items,isApplication=false) { return `<div class="toolbar"><input id="search" placeholder="Tìm kiếm" oninput="filterRows()">${isApplication?'<button onclick="openApplication()">Mở ứng dụng</button>':''}</div><table><thead><tr><th>Tên</th><th>PID</th><th>CPU</th><th>RAM</th><th></th></tr></thead><tbody>${items.map(item=>`<tr><td>${esc(item.name)}</td><td>${item.pid}</td><td>${item.cpu_percent??'-'}%</td><td>${item.ram_mb??'-'} MB</td><td><button class="danger" onclick="terminate(${item.pid},'${isApplication?'CLOSE_APPLICATION':'KILL_PROCESS'}')">${isApplication?'Đóng':'Kill'}</button></td></tr>`).join('')}</tbody></table>`; }
-    function filterRows(){const q=$('#search').value.toLowerCase();document.querySelectorAll('tbody tr').forEach(row=>row.hidden=!row.innerText.toLowerCase().includes(q));}
-    async function openApplication(){const app=prompt('Ứng dụng được phép: notepad hoặc calculator','notepad');if(!app)return;const data=await command('OPEN_APPLICATION',{app});notify(data.ok?'Đã gửi lệnh mở ứng dụng':data.error,!data.ok);}
-    async function terminate(pid,action){if(!confirm(`Xác nhận ${action} PID ${pid}?`))return;const data=await command(action,{pid});notify(data.ok?'Thành công':data.error,!data.ok);render();}
-    function stopStream(){if(streamTimer){clearInterval(streamTimer);streamTimer=null;}}
-    async function render(){stopStream();$('#title').textContent=view[0].toUpperCase()+view.slice(1);if(view==='applications'||view==='processes'){const data=await command(view==='applications'?'LIST_APPLICATIONS':'LIST_PROCESSES');$('#content').innerHTML=data.items?rows(data.items,view==='applications'):'Không thể tải dữ liệu';return;}if(view==='files'){const data=await command('LIST_FILES',{path:currentPath});$('#content').innerHTML=data.ok?`<div class="toolbar"><button onclick="currentPath='';render()">Root</button><span class="muted">${esc(data.root)}\\${esc(data.path)}</span></div><table><thead><tr><th>Tên</th><th>Loại</th><th>Kích thước</th></tr></thead><tbody>${data.items.map(item=>`<tr><td>${esc(item.name)}</td><td>${item.is_dir?`<button onclick="openFolder('${encodeURIComponent(item.name)}')">Folder</button>`:'File'}</td><td>${item.size??'-'}</td></tr>`).join('')}</tbody></table>`:esc(data.error);return;}if(view==='power'){const data=await command('GET_TELEMETRY');$('#content').innerHTML=data.ok?`<div class="metrics"><div class="metric">CPU ${data.cpu_percent}%<div class="bar"><i style="width:${data.cpu_percent}%"></i></div></div><div class="metric">RAM ${data.ram_percent}%<div class="bar"><i style="width:${data.ram_percent}%"></i></div></div></div><p class="muted">Uptime: ${Math.floor(data.uptime_seconds/3600)} giờ · Nhiệt độ: ${data.temperature_c??'Không hỗ trợ'}°C</p><div class="toolbar">${['lock','sleep','restart','shutdown'].map(op=>`<button class="${op==='shutdown'?'danger':''}" onclick="power('${op}')">${op}</button>`).join('')}</div>`:esc(data.error);return;}if(view==='audit'){const response=await fetch(api('/api/audit'),{headers:{Authorization:'Bearer '+token}});const data=await response.json();$('#content').innerHTML='<pre>'+esc(JSON.stringify(data.entries,null,2))+'</pre>';return;}$('#content').innerHTML='<p class="muted">Frame màn hình/camera cần consent cục bộ tại Client.</p><div class="toolbar"><button onclick="startStream()">Start stream</button><button class="danger" onclick="stopStream();notify(\'Đã dừng stream\')">Stop stream</button></div><div id="frame"></div>';}
-    function openFolder(name){currentPath=(currentPath?currentPath+'/':'')+decodeURIComponent(name);render();} async function power(operation){if(!confirm(`Xác nhận ${operation} trên Client?`))return;const data=await command('POWER_ACTION',{operation});notify(data.ok?'Đã gửi lệnh':data.error,!data.ok);}
-    async function startStream(){const action=view==='screen'?'SCREEN_SNAPSHOT':'WEBCAM_SNAPSHOT';async function frame(){const data=await command(action);if(data.ok)$('#frame').innerHTML=`<img class="live" src="data:image/jpeg;base64,${data.image_base64}">`;else{notify(data.error,true);stopStream();}}await frame();streamTimer=setInterval(frame,900);}
-    $('#serverAddress').value=location.host; document.querySelectorAll('.nav').forEach(button=>button.onclick=()=>{document.querySelector('.nav.active').classList.remove('active');button.classList.add('active');view=button.dataset.view;render();});
-  </script>
+    <main class="shell">
+        <h1 class="brand">DASHBOARD</h1>
+        <button id="loginToggle" class="account-btn" type="button"
+                aria-label="Đăng nhập" onclick="toggleLogin()">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-9.5 2.67-9.5 6v2h19v-2c0-3.33-4.17-6-9.5-6Z" />
+            </svg>
+        </button>
+
+        <!-- ── CONNECT PANEL ─────────────────────────── -->
+        <section class="panel" aria-label="Kết nối Dashboard">
+            <label class="muted" for="serverAddress">Địa chỉ Dashboard Server:</label>
+            <div class="connect-row">
+                <span class="protocol">http://</span>
+                <input id="serverAddress" autocomplete="off" placeholder="127.0.0.1:5000">
+                <button type="button" onclick="connectDashboard()">⚡ Connect</button>
+            </div>
+            <div class="status-line">
+                <strong>Trạng thái:</strong>
+                <span id="connectionState" class="badge offline">Chưa kết nối</span>
+                <span id="lastUpdate" class="muted">Chưa có cập nhật</span>
+            </div>
+
+            <!-- Login Dialog -->
+            <dialog id="loginDialog" aria-labelledby="loginTitle">
+                <form id="loginForm" onsubmit="login(event)">
+                    <div class="dialog-head">
+                        <h2 id="loginTitle">Đăng nhập</h2>
+                        <button class="close-x" type="button" aria-label="Đóng" onclick="closeLogin()">×</button>
+                    </div>
+                    <p class="muted">Đăng nhập để quản lý các Agent đã kết nối.</p>
+                    <label>Username<input id="username" value="admin" required></label>
+                    <label>Password<input id="password" type="password" required></label>
+                    <button type="submit">Đăng nhập</button>
+                </form>
+            </dialog>
+        </section>
+
+        <!-- ── WORKSPACE ──────────────────────────────── -->
+        <section id="workspace">
+            <aside>
+                <button class="nav active" data-view="applications">Applications</button>
+                <button class="nav" data-view="processes">Processes</button>
+                <button class="nav" data-view="screenshot">Screenshot</button>
+                <button class="nav" data-view="webcam">Webcam</button>
+                <button class="nav" data-view="files">Files</button>
+                <button class="nav" data-view="power">Power</button>
+                <button class="nav" data-view="audit">Audit Logs</button>
+            </aside>
+
+            <article class="content-card">
+                <div class="workspace-head">
+                    <div>
+                        <h2 id="sectionTitle">Applications</h2>
+                        <p id="agentCount" class="muted">Chưa chọn Agent</p>
+                    </div>
+                    <div class="agent-row">
+                        <select id="agentSelect"></select>
+                        <button onclick="refreshAgents()">↻ Agents</button>
+                        <button onclick="render()">↻ Refresh</button>
+                    </div>
+                </div>
+                <div id="content"><p class="muted loading">Đăng nhập để bắt đầu.</p></div>
+            </article>
+        </section>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        // ══════════════════════════════════════════════════
+        //  STATE
+        // ══════════════════════════════════════════════════
+        let token = '', currentView = 'applications', apiBase = '',
+        sortField = 'cpu_percent', sortAsc = false,
+        streamActive = false, framePending = false, streamTimer = null,
+        currentPath = '', _lastItems = [];
+
+        // ══════════════════════════════════════════════════
+        //  UTILITIES
+        // ══════════════════════════════════════════════════
+        const $ = s => document.querySelector(s);
+        const $$ = s => document.querySelectorAll(s);
+        const esc = v => String(v).replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        const api = path => apiBase + path;
+        const hdrs = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
+
+        function debounce(fn, ms) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+        }
+
+        function formatBytes(b) {
+        if (b == null) return '-';
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+        if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+        return (b / 1073741824).toFixed(1) + ' GB';
+        }
+
+        // ══════════════════════════════════════════════════
+        //  NOTIFICATIONS
+        // ══════════════════════════════════════════════════
+        function notify(text, isError = false) {
+        const box = $('#toast');
+        box.innerHTML = `<div class="toast ${isError ? 'error' : ''}">${esc(text)}</div>`;
+        setTimeout(() => box.innerHTML = '', 3800);
+        }
+
+        // ══════════════════════════════════════════════════
+        //  CONNECTION / AUTH
+        // ══════════════════════════════════════════════════
+        function updateStatus(online, text) {
+        const badge = $('#connectionState');
+        badge.className = 'badge ' + (online ? 'online' : 'offline');
+        badge.textContent = online ? 'Connected' : 'Disconnected';
+        $('#lastUpdate').textContent = text || `Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`;
+        }
+
+        function normalizeAddress(value) {
+        let addr = value.trim().replace(/^https?:\/\//, '');
+        if (!addr) addr = location.host;
+        return location.protocol + '//' + addr;
+        }
+
+        async function connectDashboard() {
+        apiBase = normalizeAddress($('#serverAddress').value);
+        $('#serverAddress').value = apiBase.replace(/^https?:\/\//, '');
+        updateStatus(false, 'Đang kiểm tra kết nối...');
+        try {
+        const r = await fetch(api('/api/agents'));
+        if (r.status === 401 || r.ok) { updateStatus(true); notify('Đã kết nối Dashboard'); }
+        else throw new Error('Máy chủ không phản hồi hợp lệ');
+        } catch (err) {
+        updateStatus(false, 'Không thể kết nối.');
+        notify(err.message || 'Không thể kết nối', true);
+        }
+        }
+
+        function toggleLogin() {
+        const d = $('#loginDialog');
+        d.open ? d.close() : (d.showModal(), setTimeout(() => $('#username').focus(), 50));
+        }
+        function closeLogin() { $('#loginDialog').close(); }
+
+        async function login(event) {
+        event.preventDefault();
+        if (!apiBase) apiBase = location.origin;
+        try {
+        const r = await fetch(api('/api/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: $('#username').value, password: $('#password').value }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Đăng nhập thất bại');
+        token = data.token;
+        updateStatus(true);
+        $('#loginDialog').close();
+        $('#workspace').style.display = 'grid';
+        refreshAgents();
+        } catch (err) { notify(err.message, true); }
+        }
+
+        // ══════════════════════════════════════════════════
+        //  AGENTS
+        // ══════════════════════════════════════════════════
+        async function refreshAgents() {
+        try {
+        const r = await fetch(api('/api/agents'), { headers: { Authorization: 'Bearer ' + token } });
+        const data = await r.json();
+        if (!r.ok) return notify(data.error || 'Không tải được danh sách Agent', true);
+        const agents = data.agents || [];
+        $('#agentSelect').innerHTML = agents
+        .map(a => `<option value="${esc(a.agent_id)}">${esc(a.hostname)} · ${esc(a.agent_id)}</option>`)
+        .join('');
+        $('#agentCount').textContent = agents.length ? `${agents.length} Agent online` : 'Không có Agent online';
+        render();
+        } catch (err) { notify(err.message, true); }
+        }
+
+        // ══════════════════════════════════════════════════
+        //  COMMAND
+        // ══════════════════════════════════════════════════
+        async function command(action, payload = {}) {
+        const agentId = $('#agentSelect')?.value;
+        if (!agentId) { notify('Hãy chọn Agent trước', true); return { ok: false }; }
+        try {
+        const r = await fetch(api(`/api/agents/${encodeURIComponent(agentId)}/commands`), {
+        method: 'POST', headers: hdrs(),
+        body: JSON.stringify({ action, payload }),
+        });
+        const data = await r.json();
+        if (!r.ok) { notify(data.error || 'Lệnh thất bại', true); return { ok: false }; }
+        return data;
+        } catch (err) { notify(err.message, true); return { ok: false }; }
+        }
+
+        // ══════════════════════════════════════════════════
+        //  SORT
+        // ══════════════════════════════════════════════════
+        function setSort(field) {
+        if (sortField === field) sortAsc = !sortAsc;
+        else { sortField = field; sortAsc = true; }
+        if (_lastItems.length) {
+        const tbody = document.querySelector('table tbody');
+        if (tbody) buildTableBody(tbody, _lastItems, currentView === 'applications');
+        }
+        refreshSortArrows();
+        }
+
+        function sortedItems(items) {
+        return [...items].sort((a, b) => {
+        const va = a[sortField] ?? '', vb = b[sortField] ?? '';
+        const r = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb));
+        return sortAsc ? r : -r;
+        });
+        }
+
+        function refreshSortArrows() {
+        $$('th.sortable').forEach(th => {
+        const span = th.querySelector('.sort-arrow');
+        if (!span) return;
+        const f = th.dataset.sort;
+        span.textContent = sortField === f ? (sortAsc ? '▲' : '▼') : '';
+        });
+        }
+
+        function statusBadge(status) {
+        const cls = status === 'running' ? 's-running' : status === 'sleeping' ? 's-sleeping' : '';
+        return `<span class="s-badge ${cls}">${esc(status ?? '-')}</span>`;
+        }
+
+        function buildTableBody(tbody, items, isApp) {
+        const action = isApp ? 'CLOSE_APPLICATION' : 'KILL_PROCESS';
+        const sorted = sortedItems(items);
+        const frag = document.createDocumentFragment();
+        sorted.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+        `<td>${esc(item.name)}</td>` +
+        `<td>${item.pid}</td>` +
+        `<td>${statusBadge(item.status)}</td>` +
+        `<td>${item.cpu_percent ?? '-'}%</td>` +
+        `<td>${item.ram_mb ?? '-'} MB</td>` +
+        `<td><button class="btn-x" title="Dừng" onclick="terminate(${item.pid},'${action}')">×</button></td>`;
+        frag.appendChild(tr);
+        });
+        tbody.innerHTML = '';
+        tbody.appendChild(frag);
+        }
+
+        // ══════════════════════════════════════════════════
+        //  SEARCH (debounced)
+        // ══════════════════════════════════════════════════
+        const filterRows = debounce(() => {
+        const q = ($('#search')?.value ?? '').toLowerCase().trim();
+        $$('tbody tr').forEach(row => {
+        row.hidden = q ? !row.textContent.toLowerCase().includes(q) : false;
+        });
+        }, 200);
+
+        // ══════════════════════════════════════════════════
+        //  APPLICATIONS
+        // ══════════════════════════════════════════════════
+        async function openApp(appName) {
+        const data = await command('OPEN_APPLICATION', { app: appName });
+        notify(data.ok ? `Đã mở ${appName}` : data.error, !data.ok);
+        if (data.ok) setTimeout(render, 600);
+        }
+
+        async function openByPath() {
+        const path = $('#appPath')?.value?.trim();
+        if (!path) { notify('Nhập đường dẫn ứng dụng', true); return; }
+        const data = await command('OPEN_APPLICATION_BY_PATH', { path });
+        notify(data.ok ? `Đã mở: ${path}` : data.error, !data.ok);
+        if (data.ok) setTimeout(render, 800);
+        }
+
+        async function terminate(pid, action) {
+        if (!confirm(`Xác nhận dừng tiến trình PID ${pid}?`)) return;
+        const data = await command(action, { pid });
+        notify(data.ok ? 'Đã dừng tiến trình' : data.error, !data.ok);
+        if (data.ok) setTimeout(render, 400);
+        }
+
+        // ══════════════════════════════════════════════════
+        //  FILES
+        // ══════════════════════════════════════════════════
+        async function browseFiles(path) {
+        currentPath = path ?? '';
+        const data = await command('LIST_FILES', { path: currentPath });
+        const content = $('#content');
+
+        if (!data.ok) {
+        content.innerHTML = `<p class="err-text">⚠ ${esc(data.error)}</p>`;
+        return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        // Breadcrumb
+        const bc = document.createElement('div');
+        bc.className = 'breadcrumb';
+        bc.innerHTML =
+        `<button onclick="browseFiles('')">💽 Ổ đĩa</button>` +
+        (data.current ? `<span class="sep">›</span><span class="path-label">${esc(data.current)}</span>` : '') +
+        (data.parent != null ? `<button onclick="browseFiles(${JSON.stringify(data.parent)})">← Lên</button>` : '');
+        frag.appendChild(bc);
+
+        // Table
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th>Tên</th><th>Loại</th><th>Kích thước</th></tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        (data.items || []).forEach(item => {
+        const tr = document.createElement('tr');
+        const nameCell = item.is_dir
+        ? `<button class="btn-folder" onclick="browseFiles(${JSON.stringify(item.full_path)})">📁 ${esc(item.name)}</button>`
+        : `📄 ${esc(item.name)}`;
+        tr.innerHTML =
+        `<td>${nameCell}</td>` +
+        `<td>${item.is_dir ? 'Thư mục' : 'Tệp'}</td>` +
+        `<td>${formatBytes(item.size)}</td>`;
+        tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        frag.appendChild(table);
+
+        content.innerHTML = '';
+        content.appendChild(frag);
+        }
+
+        // ══════════════════════════════════════════════════
+        //  POWER
+        // ══════════════════════════════════════════════════
+        async function power(op) {
+        if (!confirm(`Xác nhận "${op}" trên Agent này?`)) return;
+        const data = await command('POWER_ACTION', { operation: op });
+        notify(data.ok ? `Đã gửi lệnh ${op}` : data.error, !data.ok);
+        }
+
+        // ══════════════════════════════════════════════════
+        //  STREAM (Screenshot / Webcam)
+        // ══════════════════════════════════════════════════
+        function stopStream() {
+        streamActive = false;
+        framePending = false;
+        if (streamTimer) { clearTimeout(streamTimer); streamTimer = null; }
+        }
+
+        async function startStream() {
+        const action = currentView === 'screenshot' ? 'SCREEN_SNAPSHOT' : 'WEBCAM_SNAPSHOT';
+        streamActive = true;
+        async function frame() {
+        if (!streamActive || framePending) return;
+        framePending = true;
+        try {
+        const data = await command(action);
+        if (data.ok) {
+        const f = $('#frame');
+        if (f) f.innerHTML = `<img class="live" src="data:image/jpeg;base64,${data.image_base64}" alt="stream">`;
+        } else {
+        notify(data.error, true);
+        stopStream();
+        return;
+        }
+        } finally {
+        framePending = false;
+        if (streamActive) streamTimer = setTimeout(frame, 1000);
+        }
+        }
+        await frame();
+        }
+
+        // ══════════════════════════════════════════════════
+        //  RENDER
+        // ══════════════════════════════════════════════════
+        const TITLES = {
+        applications: 'Ứng dụng (Applications)',
+        processes:    'Tiến trình (Processes)',
+        screenshot:   'Screenshot',
+        webcam:       'Webcam',
+        files:        'Tệp & Thư mục (Files)',
+        power:        'Nguồn & Telemetry (Power)',
+        audit:        'Audit Logs',
+        };
+
+        const SORTABLE_HEADER = (label, field) =>
+        `<th class="sortable" data-sort="${field}" onclick="setSort('${field}')">${label} <span class="sort-arrow"></span></th>`;
+
+        async function render() {
+        stopStream();
+        const content = $('#content');
+        const titleEl = $('#sectionTitle');
+        if (titleEl) titleEl.textContent = TITLES[currentView] || currentView;
+        content.innerHTML = '<p class="muted loading">Đang tải...</p>';
+
+        // ── Applications / Processes ──
+        if (currentView === 'applications' || currentView === 'processes') {
+        const isApp = currentView === 'applications';
+        const data = await command(isApp ? 'LIST_APPLICATIONS' : 'LIST_PROCESSES');
+        if (!data.items) {
+        content.innerHTML = '<p class="err-text">Không thể tải dữ liệu.</p>';
+        return;
+        }
+        _lastItems = data.items;
+
+        const launchPanel = isApp ? `
+        <div class="launch-panel">
+        <div class="launch-title">Mở ứng dụng</div>
+        <div class="launch-path-row">
+        <input id="appPath" placeholder="Đường dẫn đầy đủ  (VD: C:\\Windows\\System32\\calc.exe)" spellcheck="false">
+        <button onclick="openByPath()">Mở</button>
+        </div>
+        <div class="quick-row">
+        <span class="muted">Nhanh:</span>
+        <button class="quick-btn" onclick="openApp('notepad')">📝 Notepad</button>
+        <button class="quick-btn" onclick="openApp('calculator')">🔢 Calculator</button>
+        </div>
+        </div>` : '';
+
+        const tableHead = `<thead><tr>
+        ${SORTABLE_HEADER('Tên', 'name')}
+        ${SORTABLE_HEADER('PID', 'pid')}
+        <th>Trạng thái</th>
+        ${SORTABLE_HEADER('CPU %', 'cpu_percent')}
+        ${SORTABLE_HEADER('RAM', 'ram_mb')}
+        <th></th>
+        </tr></thead>`;
+
+        content.innerHTML = `
+        ${launchPanel}
+        <div class="toolbar">
+        <input id="search" placeholder="Tìm ${isApp ? 'ứng dụng' : 'tiến trình'}..." oninput="filterRows()">
+        </div>
+        <table>${tableHead}<tbody></tbody></table>`;
+
+        buildTableBody(content.querySelector('tbody'), _lastItems, isApp);
+        refreshSortArrows();
+        return;
+        }
+
+        // ── Files ──
+        if (currentView === 'files') {
+        await browseFiles(currentPath);
+        return;
+        }
+
+        // ── Power / Telemetry ──
+        if (currentView === 'power') {
+        const data = await command('GET_TELEMETRY');
+        if (!data.ok) { content.innerHTML = `<p class="err-text">${esc(data.error)}</p>`; return; }
+        const h = Math.floor(data.uptime_seconds / 3600);
+        const m = Math.floor((data.uptime_seconds % 3600) / 60);
+        content.innerHTML = `
+        <div class="metrics">
+        <div class="metric">
+        <div class="metric-label">CPU</div>
+        <div class="metric-value">${data.cpu_percent}%</div>
+        <div class="bar"><i style="width:${data.cpu_percent}%"></i></div>
+        </div>
+        <div class="metric">
+        <div class="metric-label">RAM</div>
+        <div class="metric-value">${data.ram_percent}%</div>
+        <div class="bar"><i style="width:${data.ram_percent}%"></i></div>
+        </div>
+        <div class="metric">
+        <div class="metric-label">Uptime</div>
+        <div class="metric-value" style="font-size:20px">${h}h ${m}m</div>
+        </div>
+        <div class="metric">
+        <div class="metric-label">Nhiệt độ</div>
+        <div class="metric-value" style="font-size:20px">${data.temperature_c != null ? data.temperature_c + '°C' : 'N/A'}</div>
+        </div>
+        </div>
+        <p class="platform-info">${esc(data.platform)}</p>
+        <div class="power-btns">
+        <button onclick="power('lock')">🔒 Lock</button>
+        <button onclick="power('sleep')">💤 Sleep</button>
+        <button class="danger" onclick="power('restart')">🔄 Restart</button>
+        <button class="danger" onclick="power('shutdown')">⏹ Shutdown</button>
+        </div>`;
+        return;
+        }
+
+        // ── Screenshot / Webcam ──
+        if (currentView === 'screenshot' || currentView === 'webcam') {
+        const label = currentView === 'screenshot' ? 'màn hình' : 'webcam';
+        content.innerHTML = `
+        <p class="stream-note">Yêu cầu <code>REMOTE_ADMIN_CONSENT=true</code> tại Agent để xem ${label}.</p>
+        <div class="toolbar">
+        <button onclick="startStream()">▶ Bắt đầu</button>
+        <button class="danger" onclick="stopStream();notify('Đã dừng stream')">■ Dừng</button>
+        </div>
+        <div id="frame"></div>`;
+        return;
+        }
+
+        // ── Audit ──
+        if (currentView === 'audit') {
+        try {
+        const r = await fetch(api('/api/audit'), { headers: hdrs() });
+        const data = await r.json();
+        const entries = data.entries || [];
+        if (!entries.length) { content.innerHTML = '<p class="muted">Chưa có audit entry.</p>'; return; }
+        content.innerHTML = `<div class="audit-list">${entries.map(e => {
+        const t = new Date(e.time * 1000).toLocaleString('vi-VN');
+        const ok = e.ok !== false;
+        return `<div class="audit-entry ${ok ? '' : 'fail'}">
+        <span class="audit-time">${esc(t)}</span>
+        <span class="audit-event">${esc(e.event || '')}</span>
+        <span class="audit-detail">${[e.user, e.agent_id, e.action].filter(Boolean).map(esc).join(' › ')}</span>
+        </div>`;
+        }).join('')}</div>`;
+        } catch (err) { content.innerHTML = `<p class="err-text">${esc(err.message)}</p>`; }
+        return;
+        }
+        }
+
+        // ══════════════════════════════════════════════════
+        //  NAV
+        // ══════════════════════════════════════════════════
+        $$('.nav').forEach(btn => btn.addEventListener('click', () => {
+        $$('.nav.active').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentView = btn.dataset.view;
+        currentPath = '';
+        _lastItems = [];
+        render();
+        }));
+
+        // ── Init ──
+        $('#serverAddress').value = location.host;
+    </script>
 </body>
 </html>

@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/client/__init__.py
+src/client/main.py
+src/client/modules/__init__.py
+src/client/modules/system.py
+src/remote_admin_platform.egg-info/PKG-INFO
+src/remote_admin_platform.egg-info/SOURCES.txt
+src/remote_admin_platform.egg-info/dependency_links.txt
+src/remote_admin_platform.egg-info/top_level.txt
+src/server/__init__.py
+src/server/dashboard.py
+src/server/policy.py
+src/server/relay.py
+tests/test_policy.py
