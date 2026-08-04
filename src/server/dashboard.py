@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
 from server.policy import validate_command
 
-ROOT = Path(__file__).resolve().parents[1]; load_dotenv(ROOT / ".env")
-app = Flask(__name__, static_folder=str(ROOT / "server" / "static")); audit_path = ROOT / "audit.jsonl"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]; STATIC_ROOT = Path(__file__).resolve().parent / "static"; load_dotenv(PROJECT_ROOT / ".env")
+app = Flask(__name__, static_folder=str(STATIC_ROOT)); audit_path = PROJECT_ROOT / "audit.jsonl"
 secret, key = os.environ["JWT_SECRET"], os.environ["GATEWAY_INTERNAL_KEY"]
 gateway = os.getenv("GATEWAY_INTERNAL_URL", "http://127.0.0.1:8765")
 
